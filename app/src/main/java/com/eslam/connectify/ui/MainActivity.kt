@@ -3,36 +3,68 @@ package com.eslam.connectify.ui
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.eslam.connectify.ui.channels.ChannelListScreen
+import com.eslam.connectify.ui.sign.LoginScreen
 import com.eslam.connectify.ui.theme.ConnectifyTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            ConnectifyTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(color = MaterialTheme.colors.background) {
-                    Greeting("Android")
-                }
-            }
+
+            ConnectifyApp()
+//            ConnectifyTheme {
+//                // A surface container using the 'background' color from the theme
+//                Surface(color = MaterialTheme.colors.background) {
+//
+//
+//
+//                }
+//            }
         }
     }
 }
 
 @Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
+fun ConnectifyApp() {
+
+    val navController = rememberNavController()
+    val scaffoldState = rememberScaffoldState()
+    Scaffold(scaffoldState = scaffoldState) {
+        NavHost(navController = navController, startDestination = "login") {
+            composable("login") { LoginScreen(scaffoldState = scaffoldState){
+                navController.navigate(route = "ChannelList"){
+                    popUpTo("ChannelList")
+                }
+            } }
+            composable("ChannelList") { ChannelListScreen() }
+
+        }
+    }
+
+
+
+
+
+
+
 }
 
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    ConnectifyTheme {
-        Greeting("Android")
-    }
+
+    ConnectifyApp()
+//    ConnectifyTheme {
+//
+//    }
 }
