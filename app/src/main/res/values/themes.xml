@@ -17,6 +17,8 @@
     <style name="Theme.Connectify.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+         <item name="android:background">@color/primary</item>
+        <item name="android:statusBarColor">@color/primary</item>
     </style>
 
     <style name="Theme.Connectify.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />

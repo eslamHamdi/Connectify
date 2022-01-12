@@ -6,6 +6,7 @@ import android.content.Intent
 import android.util.Log
 import com.eslam.connectify.R
 import com.eslam.connectify.domain.AuthDataSource
+import com.firebase.ui.auth.AuthMethodPickerLayout
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.ErrorCodes
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult
@@ -27,6 +28,12 @@ class AuthRepository:AuthDataSource {
     override fun buildLoginIntent(): Flow<Intent> {
 
 // Create and launch sign-in intent
+        val layout = AuthMethodPickerLayout
+            .Builder(R.layout.signin_layout)
+            .setGoogleButtonId(R.id.googleBtn)
+            .setEmailButtonId(R.id.email_button)
+            .setPhoneButtonId(R.id.phone_button)
+            .build()
 
 
         return flow {
@@ -34,8 +41,9 @@ class AuthRepository:AuthDataSource {
             val intent = AuthUI.getInstance()
                 .createSignInIntentBuilder()
                 .setAvailableProviders(providers)
-                .setLogo(R.drawable.ic_connectify)
+               .setLogo(R.drawable.ic_connectify)
                 .setTheme(R.style.Theme_Connectify_NoActionBar)
+                //.setAuthMethodPickerLayout(layout)
                 .setIsSmartLockEnabled(true)
                 .build()
 
