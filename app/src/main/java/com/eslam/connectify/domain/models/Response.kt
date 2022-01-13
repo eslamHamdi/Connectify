@@ -7,7 +7,7 @@ sealed class Response<out T> {
         val data: T
     ): Response<T>()
 
-    data class Error(
+    data class Error<out T>(
         val message: String
-    ): Response<Nothing>()
+    ): Response<T>()
 }

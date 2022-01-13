@@ -11,7 +11,7 @@ import com.google.firebase.auth.AuthResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-class AuthRepository: AuthDataSource {
+class AuthRepositoryImpl: AuthDataSource {
 
     private val providers = arrayListOf(
         AuthUI.IdpConfig.EmailBuilder().build(),

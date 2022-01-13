@@ -1,11 +1,12 @@
 package com.eslam.connectify.di
 
-import com.eslam.connectify.data.repositories.AuthRepository
+import com.eslam.connectify.data.repositories.AuthRepositoryImpl
 import com.eslam.connectify.domain.datasources.AuthDataSource
 import com.eslam.connectify.domain.usecases.SignInUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.scopes.ActivityScoped
 import dagger.hilt.components.SingletonComponent
 
 
@@ -14,10 +15,12 @@ import dagger.hilt.components.SingletonComponent
 object AuthModule {
 
     @Provides
-    fun provideRepository(): AuthDataSource = AuthRepository()
+    @ActivityScoped
+    fun provideRepository(): AuthDataSource = AuthRepositoryImpl()
 
 
     @Provides
+    @ActivityScoped
     fun provideAuthUseCases(dataSource: AuthDataSource):SignInUseCase = SignInUseCase(dataSource)
 
 

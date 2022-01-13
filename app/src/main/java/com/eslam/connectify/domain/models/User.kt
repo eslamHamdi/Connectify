@@ -1,5 +1,11 @@
 package com.eslam.connectify.domain.models
 
-data class User(val uid:String? = null,val name:String?=null,val email:String?=null,val phone:String?=null,
-                val profileImage:String? = null)
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
+
+@Parcelize
+data class User(val uid:String? = null, var name:String?=null, var email:String?=null, var phone:String?=null,
+                var profileImage:String? = null,var contacts:MutableList<User>?= mutableListOf()) :
+    Parcelable
 
