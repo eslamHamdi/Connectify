@@ -1,0 +1,14 @@
+package com.eslam.connectify.domain.usecases
+
+import android.net.Uri
+import com.eslam.connectify.domain.datasources.ProfileRepository
+import javax.inject.Inject
+
+class AccountSetup @Inject constructor(private val repository: ProfileRepository){
+
+
+    fun createProfile(image: Uri?,name:String) = repository.createProfile(image,name)
+
+
+
+}

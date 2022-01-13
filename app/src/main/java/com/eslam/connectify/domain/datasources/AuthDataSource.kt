@@ -1,4 +1,4 @@
-package com.eslam.connectify.domain
+package com.eslam.connectify.domain.datasources
 
 import android.content.Context
 import android.content.Intent

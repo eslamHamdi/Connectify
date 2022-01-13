@@ -2,13 +2,13 @@ package com.eslam.connectify.domain.usecases
 
 import android.content.Context
 import android.content.Intent
-import com.eslam.connectify.domain.AuthDataSource
+import com.eslam.connectify.domain.datasources.AuthDataSource
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.AuthResult
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class SignInUseCase @Inject constructor(private val authSource:AuthDataSource) {
+class SignInUseCase @Inject constructor(private val authSource: AuthDataSource) {
 
 
 

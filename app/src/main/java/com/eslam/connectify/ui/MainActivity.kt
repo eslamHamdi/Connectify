@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.eslam.connectify.ui.channels.ChannelListScreen
+import com.eslam.connectify.ui.profile.ProfileScreen
 import com.eslam.connectify.ui.sign.LoginScreen
 import com.eslam.connectify.ui.theme.ConnectifyTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -48,6 +49,10 @@ fun ConnectifyApp() {
                 }
             } }
             composable("ChannelList") { ChannelListScreen() }
+
+
+            composable("Profile") { ProfileScreen() }
+
 
         }
     }
