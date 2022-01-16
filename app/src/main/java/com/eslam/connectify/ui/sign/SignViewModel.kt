@@ -54,7 +54,6 @@ class SignViewModel @Inject constructor(private val authUseCases:SignInUseCase,a
 
         if (result.resultCode == Activity.RESULT_OK) {
             // Successfully signed in
-            val user = FirebaseAuth.getInstance().currentUser
             _signInStatus.value = Response.Success(true)
             // ...
         } else {
@@ -132,6 +131,8 @@ class SignViewModel @Inject constructor(private val authUseCases:SignInUseCase,a
         }
 
     }
+
+    fun getUserId() = FirebaseAuth.getInstance().currentUser?.uid
 
 
 //    @ExperimentalCoroutinesApi

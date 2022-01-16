@@ -8,6 +8,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.scopes.ActivityScoped
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 
 
 @Module
@@ -15,12 +16,12 @@ import dagger.hilt.components.SingletonComponent
 object AuthModule {
 
     @Provides
-    @ActivityScoped
+   @Singleton
     fun provideRepository(): AuthDataSource = AuthRepositoryImpl()
 
 
     @Provides
-    @ActivityScoped
+    @Singleton
     fun provideAuthUseCases(dataSource: AuthDataSource):SignInUseCase = SignInUseCase(dataSource)
 
 

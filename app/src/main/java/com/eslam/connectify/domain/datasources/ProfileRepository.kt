@@ -13,4 +13,6 @@ interface ProfileRepository  {
     fun updateProfile(img: Uri?, name:String?):Flow<Response<Any>>
 
     fun getUserInfo():Flow<Response<User?>>
+
+    fun getUserAuthId():String?
 }

@@ -1,10 +1,12 @@
 package com.eslam.connectify.data.repositories
 
 import android.net.Uri
+import android.util.Log
 import com.eslam.connectify.domain.datasources.ProfileRepository
 import com.eslam.connectify.domain.models.Response
 import com.eslam.connectify.domain.models.User
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -32,6 +34,11 @@ private val storage:FirebaseStorage):ProfileRepository{
 //            currentUser?.updateProfile( UserProfileChangeRequest.Builder().setDisplayName(name).build()
 //
 //            )
+
+            if (name.isEmpty() || name.isBlank())
+            {
+                emit(Response.Error("Please Enter Profile Name"))
+            }
             val user = User(currentUser?.uid,name, currentUser?.email, currentUser?.phoneNumber)
             if (img != null)
             {
@@ -49,8 +56,9 @@ private val storage:FirebaseStorage):ProfileRepository{
                 }
             }
 
+            val childPath = currentUser!!.email ?: currentUser.phoneNumber
 
-            database.reference.child("users").child(currentUser?.uid!!).setValue(user).addOnCompleteListener {
+            database.reference.child("users").child(childPath!!).setValue(user).addOnCompleteListener {
                 msg = if (it.isSuccessful) {
                     ""
                 }else{
@@ -78,11 +86,13 @@ private val storage:FirebaseStorage):ProfileRepository{
         return flow {
 
             emit(Response.Loading)
-            val userId = auth.currentUser?.uid
+            val userId = auth.currentUser?.email ?: auth.currentUser?.phoneNumber
+
+            val photoUrl = uploadPhoto(img,auth.currentUser)
 
             database.reference.child("users").child(userId!!).also {
-                it.child("name").setValue(name)
-                it.child("profileImage").setValue(img.toString())
+               if (name != null) {it.child("name").setValue(name)}
+                if (photoUrl != null){it.child("profileImage").setValue(photoUrl.toString())}
 
                 emit(Response.Success("Profile Updated"))
             }
@@ -100,16 +110,18 @@ private val storage:FirebaseStorage):ProfileRepository{
             emit(Response.Loading)
             var user:User? = null
             var exception:String? = null
+            val userId = auth.currentUser?.email ?: auth.currentUser?.phoneNumber
             database.reference.child("users").addListenerForSingleValueEvent(object:ValueEventListener{
                 override fun onDataChange(snapshot: DataSnapshot) {
-                   val name= snapshot.child(auth.currentUser?.uid!!).child("name").value  as String?
-                    val img =snapshot.child(auth.currentUser?.uid!!).child("profileImage").value  as String?
-                    val email = snapshot.child(auth.currentUser?.uid!!).child("email").value  as String?
-                    val phone = snapshot.child(auth.currentUser?.uid!!).child("phone").value  as String?
-                    val contacts = snapshot.child(auth.currentUser?.uid!!).child("contacts").value
-                    user = User(auth.currentUser!!.uid, name, email,phone,img,
-                        contacts as MutableList<User>?
-                    )
+//                   val name= snapshot.child(auth.currentUser?.uid!!).child("name").value  as String?
+//                    val img =snapshot.child(auth.currentUser?.uid!!).child("profileImage").value  as String?
+//                    val email = snapshot.child(auth.currentUser?.uid!!).child("email").value  as String?
+//                    val phone = snapshot.child(auth.currentUser?.uid!!).child("phone").value  as String?
+//                    val contacts = snapshot.child(auth.currentUser?.uid!!).child("contacts").value
+                    user = snapshot.child(userId!!).getValue(User::class.java)
+//                    user = User(auth.currentUser!!.uid, name, email,phone,img,
+//                        contacts as MutableList<User>?
+//                    )
 
 
                 }
@@ -138,5 +150,31 @@ private val storage:FirebaseStorage):ProfileRepository{
         }
     }
 
+    override fun getUserAuthId(): String? {
+        return auth.currentUser?.uid
+    }
+
+
+    fun uploadPhoto(img:Uri?,user:FirebaseUser?) :String?
+    {
+        var downloadUrl:String? = null
+        if (img != null && user != null)
+        {
+            val storageReference = storage.reference.child("Profiles").child(user.uid)
+
+            storageReference.putFile(img).addOnCompleteListener {
+                if (it.isSuccessful)
+                {
+                    storageReference.downloadUrl.addOnCompleteListener { task->
+                        downloadUrl = task.result.toString()
+                    }
+                }else{
+                    Log.e(null, "uploadPhoto: ${it.exception?.message}" )
+                }
+            }
+        }
+
+        return downloadUrl
+    }
 
 }
