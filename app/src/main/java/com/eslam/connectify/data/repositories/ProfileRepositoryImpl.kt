@@ -31,9 +31,7 @@ private val storage:FirebaseStorage):ProfileRepository{
 
             var msg:String? = ""
             val currentUser = auth.currentUser
-//            currentUser?.updateProfile( UserProfileChangeRequest.Builder().setDisplayName(name).build()
-//
-//            )
+
 
             if (name.isEmpty() || name.isBlank())
             {
@@ -56,7 +54,8 @@ private val storage:FirebaseStorage):ProfileRepository{
                 }
             }
 
-            val childPath = currentUser!!.email ?: currentUser.phoneNumber
+            val childPath = currentUser!!.uid
+
 
             database.reference.child("users").child(childPath!!).setValue(user).addOnCompleteListener {
                 msg = if (it.isSuccessful) {
@@ -86,11 +85,13 @@ private val storage:FirebaseStorage):ProfileRepository{
         return flow {
 
             emit(Response.Loading)
-            val userId = auth.currentUser?.email ?: auth.currentUser?.phoneNumber
-
+            val userId = auth.currentUser?.uid
             val photoUrl = uploadPhoto(img,auth.currentUser)
 
+            //val obj:HashMap<String,Any>
+
             database.reference.child("users").child(userId!!).also {
+
                if (name != null) {it.child("name").setValue(name)}
                 if (photoUrl != null){it.child("profileImage").setValue(photoUrl.toString())}
 
@@ -110,18 +111,11 @@ private val storage:FirebaseStorage):ProfileRepository{
             emit(Response.Loading)
             var user:User? = null
             var exception:String? = null
-            val userId = auth.currentUser?.email ?: auth.currentUser?.phoneNumber
+            val userId = auth.currentUser?.uid
             database.reference.child("users").addListenerForSingleValueEvent(object:ValueEventListener{
                 override fun onDataChange(snapshot: DataSnapshot) {
-//                   val name= snapshot.child(auth.currentUser?.uid!!).child("name").value  as String?
-//                    val img =snapshot.child(auth.currentUser?.uid!!).child("profileImage").value  as String?
-//                    val email = snapshot.child(auth.currentUser?.uid!!).child("email").value  as String?
-//                    val phone = snapshot.child(auth.currentUser?.uid!!).child("phone").value  as String?
-//                    val contacts = snapshot.child(auth.currentUser?.uid!!).child("contacts").value
-                    user = snapshot.child(userId!!).getValue(User::class.java)
-//                    user = User(auth.currentUser!!.uid, name, email,phone,img,
-//                        contacts as MutableList<User>?
-//                    )
+                   user = snapshot.child(userId!!).getValue(User::class.java)
+
 
 
                 }
@@ -154,6 +148,10 @@ private val storage:FirebaseStorage):ProfileRepository{
         return auth.currentUser?.uid
     }
 
+    override fun getSignInState(): FirebaseUser? {
+        return auth.currentUser
+    }
+
 
     fun uploadPhoto(img:Uri?,user:FirebaseUser?) :String?
     {
@@ -176,5 +174,10 @@ private val storage:FirebaseStorage):ProfileRepository{
 
         return downloadUrl
     }
+
+
+//    fun editMail(mail:String?):String?{
+//        return mail?.replace('.','-')
+//    }
 
 }

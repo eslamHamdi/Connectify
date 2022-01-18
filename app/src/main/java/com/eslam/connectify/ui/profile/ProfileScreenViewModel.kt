@@ -30,8 +30,8 @@ class ProfileScreenViewModel @Inject constructor(private val useCases: AccountSe
   val profileState: State<String>
     get() = _profileState
 
-  private var _errorState :MutableState<String> =  mutableStateOf("")
-  val errorState: State<String>
+  private var _errorState :MutableState<String?> =  mutableStateOf(null)
+  val errorState: State<String?>
     get() = _errorState
 
   private var _loadingState :MutableState<Boolean> =  mutableStateOf(false)

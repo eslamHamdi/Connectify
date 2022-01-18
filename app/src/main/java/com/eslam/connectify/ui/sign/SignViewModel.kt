@@ -9,14 +9,11 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.eslam.connectify.ConnectifyApp
 import com.eslam.connectify.domain.models.Response
 import com.eslam.connectify.domain.usecases.SignInUseCase
 import com.firebase.ui.auth.ErrorCodes
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -29,9 +26,9 @@ class SignViewModel @Inject constructor(private val authUseCases:SignInUseCase,a
 
 
 
-    private val _signInStatus:MutableState<Response<Boolean>> = mutableStateOf(Response.Success(false))
+    private val _signInStatus:MutableState<Response<String?>> = mutableStateOf(Response.Success(null))
 
-    val signInState:State<Response<Boolean>>
+    val signInState:State<Response<String?>>
     get() = _signInStatus
 
     private val _signInIntent:MutableState<Intent?> = mutableStateOf(null)
@@ -41,7 +38,7 @@ class SignViewModel @Inject constructor(private val authUseCases:SignInUseCase,a
 
 
     init {
-        silentSignIn()
+       Signup()
     }
 
 
@@ -54,7 +51,8 @@ class SignViewModel @Inject constructor(private val authUseCases:SignInUseCase,a
 
         if (result.resultCode == Activity.RESULT_OK) {
             // Successfully signed in
-            _signInStatus.value = Response.Success(true)
+                val userId = authUseCases.getAuthUser()?.uid
+            _signInStatus.value = Response.Success(userId)
             // ...
         } else {
             // Sign in failed. If response is null the user canceled the
@@ -92,31 +90,31 @@ class SignViewModel @Inject constructor(private val authUseCases:SignInUseCase,a
     }
 
 
-    fun silentSignIn()
-    {
-        viewModelScope.launch {
-            authUseCases.silentSignIn(getApplication()).collect { task->
-
-                if (task != null && task.result?.user != null) {
-
-                    _signInStatus.value = Response.Success(true)
-
-                }else{
-                    _signInStatus.value = Response.Success(false)
-                }
-
-            }
-        }
-
-    }
+//    fun silentSignIn()
+//    {
+//        viewModelScope.launch {
+//            authUseCases.silentSignIn(getApplication()).collect { task->
+//
+//                if (task?.result?.user != null) {
+//
+//                    _signInStatus.value = Response.Success(true)
+//
+//                }else{
+//                    _signInStatus.value = Response.Success(false)
+//                }
+//
+//            }
+//        }
+//
+//    }
 
     fun Signup(){
 
-        val user = Firebase.auth.currentUser
+        val user = authUseCases.getAuthUser()
 
         if (user != null) {
             // User is signed in
-            _signInStatus.value = Response.Success(true)
+            _signInStatus.value = Response.Success(user.uid)
 
         } else {
             // No user is signed in
@@ -131,8 +129,6 @@ class SignViewModel @Inject constructor(private val authUseCases:SignInUseCase,a
         }
 
     }
-
-    fun getUserId() = FirebaseAuth.getInstance().currentUser?.uid
 
 
 //    @ExperimentalCoroutinesApi

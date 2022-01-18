@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
@@ -27,6 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eslam.connectify.R
 import com.eslam.connectify.data.repositories.SharedPreferencesRepositoryImpl
 import com.eslam.connectify.ui.destinations.ChannelListScreenDestination
@@ -35,11 +37,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
+@ExperimentalComposeUiApi
 @Destination
 @Composable
 fun ProfileScreen(navigator: DestinationsNavigator?)
 {
     val context = LocalContext.current
+    val viewModel = hiltViewModel<ProfileScreenViewModel>()
     val preferences = SharedPreferencesRepositoryImpl(context)
     val imageBitmap:MutableState<Bitmap?> = remember{ mutableStateOf<Bitmap?>(AppCompatResources.getDrawable(context, R.drawable.ic_avatar)
         ?.toBitmap())}
@@ -47,7 +51,7 @@ fun ProfileScreen(navigator: DestinationsNavigator?)
         mutableStateOf<Uri?>(null)
     }
 
-    val viewModel:ProfileScreenViewModel = hiltViewModel()
+
 
     val launcher = rememberLauncherForActivityResult(contract =
     ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -78,9 +82,12 @@ fun ProfileScreen(navigator: DestinationsNavigator?)
 
             }
 
+           if (viewModel.errorState.value != null)
+           {
+               LaunchedEffect(key1 = Unit){Toast.makeText(context,viewModel.errorState.value,Toast.LENGTH_SHORT).show()
+               }
+           }
 
-
-    ConnectifyTheme() {
         Surface(color = MaterialTheme.colors.primary, modifier = Modifier.fillMaxSize()) {
 
             Column(
@@ -140,13 +147,14 @@ fun ProfileScreen(navigator: DestinationsNavigator?)
             }
 
         }
-    }
+
 
 
 }
 
 
 
+@ExperimentalComposeUiApi
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {

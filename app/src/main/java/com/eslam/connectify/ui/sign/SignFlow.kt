@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.eslam.connectify.data.repositories.SharedPreferencesRepositoryImpl
@@ -15,6 +16,7 @@ import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
+@ExperimentalComposeUiApi
 @Composable
 @Destination(start = true)
 fun LoginScreen(navigator:DestinationsNavigator)
@@ -36,14 +38,12 @@ fun LoginScreen(navigator:DestinationsNavigator)
         {
             is Response.Success->
             {
-                if (!(signInState.value as Response.Success<Boolean>).data)
+                if ((signInState.value as Response.Success<String?>).data == null)
                 {
-                    LaunchedEffect(key1 = true){
-                        viewModel.Signup()
-                    }
+
                 }else
                 {
-                    val id = viewModel.getUserId()
+                    val id = (signInState.value as Response.Success<String?>).data
                     val state = id?.let { preferences.getAccountState(it) }
 
                     if (state == true)
@@ -75,7 +75,11 @@ fun LoginScreen(navigator:DestinationsNavigator)
 
         LaunchedEffect(key1 = intentState  ){
 
-            loginLauncher.launch(intentState.value)
+            if (intentState.value != null)
+            {
+                loginLauncher.launch(intentState.value)
+            }
+
         }
 
 

@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.tooling.preview.Preview
 import com.eslam.connectify.data.repositories.SharedPreferencesRepositoryImpl
 import com.eslam.connectify.ui.theme.ConnectifyTheme
@@ -14,7 +15,9 @@ import dagger.hilt.android.AndroidEntryPoint
 
 
 @AndroidEntryPoint
+@ExperimentalComposeUiApi
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -23,16 +26,16 @@ class MainActivity : ComponentActivity() {
 
             ConnectifyTheme {
 //                // A surface container using the 'background' color from the theme
-                Surface(color = MaterialTheme.colors.primary) {
 
                     ConnectifyApp()
 
-                }
+
             }
         }
     }
 }
 
+@ExperimentalComposeUiApi
 @Composable
 fun ConnectifyApp() {
 
@@ -64,6 +67,7 @@ fun ConnectifyApp() {
 
 }
 
+@ExperimentalComposeUiApi
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {

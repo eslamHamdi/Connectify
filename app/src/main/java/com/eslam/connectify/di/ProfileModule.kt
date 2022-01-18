@@ -9,17 +9,19 @@ import com.google.firebase.storage.FirebaseStorage
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.components.ViewModelComponent
+import dagger.hilt.android.scopes.ViewModelScoped
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 
 @Module(includes = [FireBaseModule::class])
-@InstallIn(SingletonComponent::class)
+@InstallIn(ViewModelComponent::class)
 object ProfileModule {
 
 
     @Provides
-    @Singleton
+    @ViewModelScoped
     fun provideProfileRepository(auth: FirebaseAuth,  database: FirebaseDatabase, storage: FirebaseStorage
     ):ProfileRepository {
 
@@ -27,6 +29,11 @@ object ProfileModule {
     }
 
     @Provides
-    @Singleton
+    @ViewModelScoped
     fun provideAccountSetUpUseCases(repository: ProfileRepository)= AccountSetupUseCases(repository)
+
+
+
+
+
 }
