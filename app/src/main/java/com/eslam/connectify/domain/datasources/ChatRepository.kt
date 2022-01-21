@@ -1,16 +1,20 @@
 package com.eslam.connectify.domain.datasources
 
+import com.eslam.connectify.domain.models.ChatRoom
+import com.eslam.connectify.domain.models.Response
 import com.eslam.connectify.domain.models.User
 import kotlinx.coroutines.flow.Flow
 
 interface ChatRepository {
 
 
-    fun findContactByName(name:String): Flow<List<User>>
+    fun findContactByName(name:String): Flow<Response<List<ChatRoom?>>>
 
-    fun addContact(user: User):Flow<Boolean>
+    fun addContact(userId: String):Flow<Boolean>
 
-    fun addRoom():Flow<Boolean>
+    fun addRoom(room:ChatRoom,contactId:String):Flow<Boolean>
 
-    fun getRooms():Flow<List<User>>
+    suspend fun getRooms():Flow<List<ChatRoom?>>
+
+    fun signOut():Flow<Boolean>
 }

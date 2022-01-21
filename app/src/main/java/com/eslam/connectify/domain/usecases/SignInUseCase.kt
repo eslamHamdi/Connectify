@@ -9,17 +9,14 @@ class SignInUseCase @Inject constructor(private val authSource: AuthDataSource) 
 
 
 
-    fun launchSignInIntent(): Flow<Intent>
+    fun launchSignInIntent(): Flow<Any>
     {
       return authSource.buildLoginIntent()
     }
 
 
 
-    fun signOut()
-    {
 
-    }
 
     fun getAuthUser() = authSource.getUser()
 }

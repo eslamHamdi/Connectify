@@ -13,20 +13,20 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 @Module
-@InstallIn(ViewModelComponent::class)
+@InstallIn(SingletonComponent::class)
 object FireBaseModule {
 
 
     @Provides
-    @ViewModelScoped
+    @Singleton
     fun providesFireAuth(): FirebaseAuth = FirebaseAuth.getInstance()
 
     @Provides
-    @ViewModelScoped
+    @Singleton
     fun providesFireStorage(): FirebaseStorage = FirebaseStorage.getInstance()
 
 
     @Provides
-    @ViewModelScoped
+    @Singleton
     fun providesFireDataBase(): FirebaseDatabase = FirebaseDatabase.getInstance()
 }

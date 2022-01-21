@@ -16,6 +16,7 @@ import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class ProfileRepositoryImpl @Inject constructor(private val auth: FirebaseAuth,private val database: FirebaseDatabase,
@@ -31,42 +32,61 @@ private val storage:FirebaseStorage):ProfileRepository{
 
             var msg:String? = ""
             val currentUser = auth.currentUser
+            val childPath = currentUser!!.uid
 
 
             if (name.isEmpty() || name.isBlank())
             {
                 emit(Response.Error("Please Enter Profile Name"))
             }
-            val user = User(currentUser?.uid,name, currentUser?.email, currentUser?.phoneNumber)
+            Log.e(null, "createProfile: $name", )
+            var user = User(currentUser.uid,name, currentUser.email, currentUser.phoneNumber)
             if (img != null)
             {
-                val storageReference = storage.reference.child("Profiles").child(currentUser?.uid!!)
+                val storageReference = storage.reference.child("Profiles").child(currentUser.uid)
 
                 storageReference.putFile(img).addOnCompleteListener {
                     if (it.isSuccessful)
                     {
                         storageReference.downloadUrl.addOnCompleteListener { task->
-                            user.profileImage = task.result.toString()
+                            Log.e(null, "createProfile: ${task.result.toString()}", )
+                            user.apply {
+                                profileImage = task.result.toString()
+                            }
+
+
+
+                            Log.e(null, "createProfile: $user ", )
+                            database.reference.child("users").child(childPath).setValue(user).addOnSuccessListener {
+                                Log.e(null, "createProfile: done ", )
+                                msg = ""
+
+
+                            }.addOnFailureListener {
+                                it.message
+                                Log.e("Profile", "createProfile: ${it.message} ", )
+                            }
                         }
                     }else{
                         msg = it.exception.toString()
                     }
                 }
-            }
+            }else{
 
-            val childPath = currentUser!!.uid
+                Log.e(null, "createProfile: $user ", )
+                database.reference.child("users").child(childPath).setValue(user).addOnSuccessListener {
+                    Log.e(null, "createProfile: done ", )
+                    msg = ""
 
 
-            database.reference.child("users").child(childPath!!).setValue(user).addOnCompleteListener {
-                msg = if (it.isSuccessful) {
-                    ""
-                }else{
-                    it.exception?.message ?:"Failed To Create Account Check Your Internet and Try again "
-
+                }.addOnFailureListener {
+                    it.message
+                    Log.e("Profile", "createProfile: ${it.message} ", )
                 }
-
-
             }
+
+
+
 
             if (!msg.isNullOrBlank())
             {
@@ -77,8 +97,11 @@ private val storage:FirebaseStorage):ProfileRepository{
             }
 
 
+            }
+
+
         }
-    }
+
 
     override fun updateProfile(img: Uri?, name: String?): Flow<Response<Any>> {
 
@@ -92,8 +115,8 @@ private val storage:FirebaseStorage):ProfileRepository{
 
             database.reference.child("users").child(userId!!).also {
 
-               if (name != null) {it.child("name").setValue(name)}
-                if (photoUrl != null){it.child("profileImage").setValue(photoUrl.toString())}
+               if (name != null) {it.child("name").setValue(name).await()}
+                if (photoUrl != null){it.child("profileImage").setValue(photoUrl.toString()).await()}
 
                 emit(Response.Success("Profile Updated"))
             }

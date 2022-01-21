@@ -121,7 +121,7 @@ class SignViewModel @Inject constructor(private val authUseCases:SignInUseCase,a
                 viewModelScope.launch {
                     authUseCases.launchSignInIntent().collect {
 
-                        _signInIntent.value = it
+                        _signInIntent.value = it as Intent
 
                     }
                 }

@@ -16,12 +16,12 @@ import javax.inject.Singleton
 
 
 @Module(includes = [FireBaseModule::class])
-@InstallIn(ViewModelComponent::class)
+@InstallIn(SingletonComponent::class)
 object ProfileModule {
 
 
     @Provides
-    @ViewModelScoped
+    @Singleton
     fun provideProfileRepository(auth: FirebaseAuth,  database: FirebaseDatabase, storage: FirebaseStorage
     ):ProfileRepository {
 
@@ -29,7 +29,7 @@ object ProfileModule {
     }
 
     @Provides
-    @ViewModelScoped
+    @Singleton
     fun provideAccountSetUpUseCases(repository: ProfileRepository)= AccountSetupUseCases(repository)
 
 

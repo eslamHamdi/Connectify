@@ -1,13 +1,11 @@
 package com.eslam.connectify.ui.channels
 
-import android.graphics.drawable.AnimatedVectorDrawable
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -39,7 +37,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberImagePainter
 import coil.transform.CircleCropTransformation
 import com.eslam.connectify.R
@@ -52,21 +50,29 @@ import com.ramcosta.composedestinations.annotation.Destination
 @Composable
 fun ChannelListScreen(contacts:List<User> = listOf())
 {
+    val viewModel:ChannelsViewModel = hiltViewModel()
     Scaffold(topBar = {
-        TopBar(title = "Connectify", icon = Icons.Default.Home) {
-            return@TopBar Unit
+        TopBar(title = "Connectify", icon = Icons.Default.Home,viewModel) {
+            return@TopBar
         }
     }
 
     ) {
         Surface(modifier = Modifier.fillMaxSize()) {
+            val rooms = viewModel.chatRooms
             val type = LastMessageType.Text
-            type.content = "Hiiiii"
-            LazyColumn {
-                items(contacts){ contact->
-                    ContactItem({  },contact.profileImage?:"",contact.name!!,type)
+            type.content = ""
+            Box {
+                LazyColumn {
+                    items(rooms.value){ room->
+                        ContactItem({  },room?.imageUrl?:"",room?.name!!,type)
+                    }
                 }
+
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center)
+                    .alpha(if (viewModel.loadingState.value) 1f else 0f))
             }
+
 
         }
     }
@@ -140,7 +146,7 @@ fun ChannelListScreen(contacts:List<User> = listOf())
 
 @ExperimentalComposeUiApi
 @Composable
-fun TopBar(title:String, icon: ImageVector, navAction:()->Unit)
+fun TopBar(title:String, icon: ImageVector,viewModel:ChannelsViewModel, navAction:()->Unit)
 {
     //navigationIcon = {Icon(painter = rememberVectorPainter(image = icon ), contentDescription ="" , modifier = Modifier
     //        .padding(2.dp)
@@ -156,7 +162,9 @@ fun TopBar(title:String, icon: ImageVector, navAction:()->Unit)
         text = title
     )}, actions = {
 
-        OutlinedTextField(value = "", onValueChange ={} ,
+        OutlinedTextField(value = viewModel.searchBarState.value, onValueChange ={
+                 viewModel.contactSearch(it)
+        } ,
              textStyle = TextStyle(color = Color.White), modifier = Modifier
                 .alpha(
                     if (searchBarsState.value) 1f else 0f

@@ -43,7 +43,7 @@ class AuthRepositoryImpl: AuthDataSource {
                .setLogo(R.drawable.ic_connectify)
                 .setTheme(R.style.Theme_Connectify_NoActionBar)
                 //.setAuthMethodPickerLayout(layout)
-                .setIsSmartLockEnabled(true)
+                .setIsSmartLockEnabled(false)
                 .build()
 
             emit(intent)
