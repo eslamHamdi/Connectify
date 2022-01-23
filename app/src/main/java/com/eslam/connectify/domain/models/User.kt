@@ -6,8 +6,7 @@ import kotlinx.parcelize.Parcelize
 
 
 @Parcelize
-
-data class User( @get:Exclude var uid:String? = null,var name:String?=null, var email:String?=null, var phone:String?=null,
+data class User(  var uid:String? = null,var name:String?=null, var phone:String?=null,
                 var profileImage:String? = null, var contacts:List<String>?= null) :
     Parcelable
 

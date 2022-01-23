@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 interface ProfileRepository  {
 
 
-    fun createProfile(img: Uri?, name:String):Flow<Response<Any>>
+    suspend fun createProfile(img: Uri?, name:String):Response<Any>
 
     fun updateProfile(img: Uri?, name:String?):Flow<Response<Any>>
 

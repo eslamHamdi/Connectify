@@ -19,9 +19,7 @@ import kotlinx.coroutines.flow.flow
 class AuthRepositoryImpl: AuthDataSource {
 
     private val providers = arrayListOf(
-        AuthUI.IdpConfig.EmailBuilder().build(),
         AuthUI.IdpConfig.PhoneBuilder().build(),
-        AuthUI.IdpConfig.GoogleBuilder().build(),
     )
 
     override fun buildLoginIntent(): Flow<Intent> {

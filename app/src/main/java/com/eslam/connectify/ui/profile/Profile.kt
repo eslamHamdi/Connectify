@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -37,6 +38,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
+@ExperimentalAnimationApi
 @ExperimentalComposeUiApi
 @Destination
 @Composable
@@ -79,6 +81,8 @@ fun ProfileScreen(navigator: DestinationsNavigator?)
                 }
 
                 navigator?.navigate(ChannelListScreenDestination)
+                navigator?.popBackStack()
+
 
             }
 
@@ -154,6 +158,7 @@ fun ProfileScreen(navigator: DestinationsNavigator?)
 
 
 
+@ExperimentalAnimationApi
 @ExperimentalComposeUiApi
 @Preview(showBackground = true)
 @Composable

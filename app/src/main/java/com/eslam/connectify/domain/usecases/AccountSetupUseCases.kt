@@ -7,7 +7,7 @@ import javax.inject.Inject
 class AccountSetupUseCases @Inject constructor(private val repository: ProfileRepository){
 
 
-    fun createProfile(image: Uri?,name:String) = repository.createProfile(image,name)
+    suspend fun createProfile(image: Uri?, name:String) = repository.createProfile(image,name)
 
     fun updateProfileInfo(image: Uri?,name:String) = repository.updateProfile(image,name)
 

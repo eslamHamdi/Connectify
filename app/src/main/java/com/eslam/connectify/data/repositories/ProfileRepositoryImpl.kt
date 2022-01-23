@@ -2,6 +2,7 @@ package com.eslam.connectify.data.repositories
 
 import android.net.Uri
 import android.util.Log
+import com.eslam.connectify.data.utils.singleValueEvent
 import com.eslam.connectify.domain.datasources.ProfileRepository
 import com.eslam.connectify.domain.models.Response
 import com.eslam.connectify.domain.models.User
@@ -13,7 +14,11 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
@@ -25,82 +30,90 @@ private val storage:FirebaseStorage):ProfileRepository{
     init {
         database.setPersistenceEnabled(true)
     }
-    override fun createProfile(img: Uri?, name: String): Flow<Response<Any>> {
-        return flow {
-
-            emit(Response.Loading)
-
-            var msg:String? = ""
-            val currentUser = auth.currentUser
-            val childPath = currentUser!!.uid
+    override suspend fun createProfile(img: Uri?, name: String): Response<Any> {
+        var msg:String? = ""
+        val currentUser = auth.currentUser
+        val childPath = currentUser!!.uid
 
 
-            if (name.isEmpty() || name.isBlank())
+        if (name.isEmpty() || name.isBlank())
+        {
+            return (Response.Error("Please Enter Profile Name"))
+        }
+        Log.e(null, "createProfile: $name", )
+        var user = User(currentUser.uid,name, currentUser.phoneNumber, contacts = listOf())
+        if (img != null)
+        {
+            val storageReference = storage.reference.child("Profiles").child(currentUser.uid)
+
+            val upLoadTask = storageReference.putFile(img).await()
+
+
+            if (upLoadTask.task.isSuccessful)
             {
-                emit(Response.Error("Please Enter Profile Name"))
-            }
-            Log.e(null, "createProfile: $name", )
-            var user = User(currentUser.uid,name, currentUser.email, currentUser.phoneNumber)
-            if (img != null)
-            {
-                val storageReference = storage.reference.child("Profiles").child(currentUser.uid)
-
-                storageReference.putFile(img).addOnCompleteListener {
-                    if (it.isSuccessful)
-                    {
-                        storageReference.downloadUrl.addOnCompleteListener { task->
-                            Log.e(null, "createProfile: ${task.result.toString()}", )
-                            user.apply {
-                                profileImage = task.result.toString()
-                            }
-
-
-
-                            Log.e(null, "createProfile: $user ", )
-                            database.reference.child("users").child(childPath).setValue(user).addOnSuccessListener {
-                                Log.e(null, "createProfile: done ", )
-                                msg = ""
-
-
-                            }.addOnFailureListener {
-                                it.message
-                                Log.e("Profile", "createProfile: ${it.message} ", )
-                            }
-                        }
-                    }else{
-                        msg = it.exception.toString()
-                    }
+                storageReference.downloadUrl.await()?.let {
+                    Log.e(null, "createProfile: ${it.toString()}",)
+                    user.profileImage = it.toString()
+                    Log.e(null, "user: $user",)
                 }
-            }else{
-
-                Log.e(null, "createProfile: $user ", )
-                database.reference.child("users").child(childPath).setValue(user).addOnSuccessListener {
-                    Log.e(null, "createProfile: done ", )
-                    msg = ""
+                try {
+//                    val userMap:MutableMap<String,User> = mutableMapOf()
+//                    userMap.put()
 
 
-                }.addOnFailureListener {
-                    it.message
-                    Log.e("Profile", "createProfile: ${it.message} ", )
+                    Log.e(null, "createProfile: entered try", )
+
+               val userDataList:MutableList<User> = mutableListOf()
+                    userDataList.add(user)
+                    database.reference.child("users").child(childPath).setValue(user).await()
+
+
+                        Log.e(null, "createProfile: done ", )
+
+                    return Response.Success("Profile Created")
+                }catch (e:Exception) {
+                    Log.e(null, "createProfile: ${e.message}", )
+                    return Response.Error(e.message!!)
+
                 }
-            }
 
 
 
-
-            if (!msg.isNullOrBlank())
-            {
-                emit(Response.Error(msg!!))
             }else{
-
-                emit(Response.Success("Profile Created"))
+                msg = upLoadTask.task.exception.toString()
+                return Response.Error(msg)
             }
+
+        }else{
+
+            Log.e(null, "createProfile: $user ", )
+
+            return try {
+                database.reference.child("users").child(childPath).setValue(user).await()
+                (Response.Success("Profile Created"))
+                // Log.e(null, "createProfile: done ", )
+            }catch (e:Exception) {
+                msg = e.message
+                Log.e("Profile", "createProfile: ${e.message} ", )
+                (Response.Error(msg!!))
 
 
             }
 
 
         }
+
+
+    }
+
+
+
+
+
+
+
+
+
 
 
     override fun updateProfile(img: Uri?, name: String?): Flow<Response<Any>> {
@@ -135,32 +148,17 @@ private val storage:FirebaseStorage):ProfileRepository{
             var user:User? = null
             var exception:String? = null
             val userId = auth.currentUser?.uid
-            database.reference.child("users").addListenerForSingleValueEvent(object:ValueEventListener{
-                override fun onDataChange(snapshot: DataSnapshot) {
-                   user = snapshot.child(userId!!).getValue(User::class.java)
+            val response = database.reference.child("users").singleValueEvent()
 
-
-
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-
-                    exception = error.message
-                }
-
-
-
-            })
-
-            if (exception != null)
+            if (response is Response.Success)
             {
-                emit(Response.Error(exception!!))
-            }else
-            {
+                user = response.data.child(userId!!).getValue(User::class.java)
                 emit(Response.Success(user))
-            }
-
-
+            }else if (response is Response.Error)
+            {
+                    exception = response.message
+                emit(Response.Error(exception))
+                }
 
         }.catch {
             emit(Response.Error("Failed to get user info!!"))
@@ -176,31 +174,28 @@ private val storage:FirebaseStorage):ProfileRepository{
     }
 
 
-    fun uploadPhoto(img:Uri?,user:FirebaseUser?) :String?
+   private suspend fun uploadPhoto(img:Uri?, user:FirebaseUser?) :String?
     {
         var downloadUrl:String? = null
         if (img != null && user != null)
         {
             val storageReference = storage.reference.child("Profiles").child(user.uid)
 
-            storageReference.putFile(img).addOnCompleteListener {
-                if (it.isSuccessful)
+            val uploadTask =storageReference.putFile(img).await().task
+                if (uploadTask.isSuccessful)
                 {
-                    storageReference.downloadUrl.addOnCompleteListener { task->
-                        downloadUrl = task.result.toString()
-                    }
+                    downloadUrl = storageReference.downloadUrl.await().toString()
+
                 }else{
-                    Log.e(null, "uploadPhoto: ${it.exception?.message}" )
+                    Log.e(null, "uploadPhoto: ${uploadTask.result.error}" )
                 }
-            }
+
         }
 
         return downloadUrl
     }
 
 
-//    fun editMail(mail:String?):String?{
-//        return mail?.replace('.','-')
-//    }
+
 
 }

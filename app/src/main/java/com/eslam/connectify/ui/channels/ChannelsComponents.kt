@@ -11,10 +11,8 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -40,22 +38,24 @@ fun SearchBar(
     var showClearButton = remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
+    val showBackButton: MutableState<Boolean> = remember{ mutableStateOf(false)}
 
 
 
-    TopAppBar(title = { Text("") }, navigationIcon = {
-        IconButton(onClick = { onNavigateBack() }) {
-            Icon(
-                imageVector = Icons.Filled.ArrowBack,
-                modifier = Modifier,
-                contentDescription = "stringResource(id = R.string.icn_search_back_content_description)"
-            )
-        }
+    TopAppBar(title = { Text("Connectify", modifier = Modifier.wrapContentWidth(align = Alignment.Start)) },
+        navigationIcon = {
+//        IconButton(onClick = { onNavigateBack() }) {
+//            Icon(
+//                imageVector = Icons.Filled.ArrowBack,
+//                modifier = Modifier,
+//                contentDescription = "stringResource(id = R.string.icn_search_back_content_description)"
+//            )
+//        }
     }, actions = {
 
         OutlinedTextField(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxWidth(0.6f)
                 .padding(vertical = 2.dp)
                 .onFocusChanged { focusState ->
                     showClearButton.value = (focusState.isFocused)
@@ -99,9 +99,9 @@ fun SearchBar(
     })
 
 
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
+//    LaunchedEffect(Unit) {
+//        focusRequester.requestFocus()
+//    }
 }
 
 

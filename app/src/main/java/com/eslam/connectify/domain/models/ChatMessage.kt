@@ -6,4 +6,4 @@ import java.util.*
 
 @Parcelize
 data class ChatMessage(val messageId:String? =null,val content:String? = null,val senderId:String? = null,val mediaUrl:String? = null,
-val timeStamp:Long? = Date().time) : Parcelable
+val timeStamp:Long? = null, val type:String? = null) : Parcelable

@@ -1,6 +1,7 @@
 package com.eslam.connectify.ui.channels
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
@@ -41,20 +42,24 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberImagePainter
 import coil.transform.CircleCropTransformation
 import com.eslam.connectify.R
+import com.eslam.connectify.domain.models.ChatMessage
 import com.eslam.connectify.domain.models.User
 import com.eslam.connectify.ui.theme.ConnectifyTheme
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
+@ExperimentalAnimationApi
 @ExperimentalComposeUiApi
 @Destination
 @Composable
-fun ChannelListScreen(contacts:List<User> = listOf())
+fun ChannelListScreen(navigator: DestinationsNavigator?)
 {
+//    TopBar(title = "Connectify", icon = Icons.Default.Home,viewModel) {
+//        return@TopBar
+//    }
     val viewModel:ChannelsViewModel = hiltViewModel()
     Scaffold(topBar = {
-        TopBar(title = "Connectify", icon = Icons.Default.Home,viewModel) {
-            return@TopBar
-        }
+        SearchBar(searchText = "")
     }
 
     ) {
@@ -65,11 +70,12 @@ fun ChannelListScreen(contacts:List<User> = listOf())
             Box {
                 LazyColumn {
                     items(rooms.value){ room->
-                        ContactItem({  },room?.imageUrl?:"",room?.name!!,type)
+                        ContactItem({  },room?.imageUrl?:"",room?.name!!,room.lastMessage)
                     }
                 }
 
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center)
+                CircularProgressIndicator(modifier = Modifier
+                    .align(Alignment.Center)
                     .alpha(if (viewModel.loadingState.value) 1f else 0f))
             }
 
@@ -80,7 +86,7 @@ fun ChannelListScreen(contacts:List<User> = listOf())
 }
 
   @Composable
-  fun ContactItem(onClick:()->Unit,imgSource:String,name:String,lastMsg:LastMessageType)
+  fun ContactItem(onClick:()->Unit,imgSource:String,name:String,lastMsg:ChatMessage?)
   {
      
       Card(modifier = Modifier
@@ -102,12 +108,13 @@ fun ChannelListScreen(contacts:List<User> = listOf())
               Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.Start) {
 
                   Text(text = name)
-                  Text(text = when(lastMsg){
+                  Text(text = when(lastMsg?.type){
 
-                      LastMessageType.Text -> lastMsg.content!!
-                      LastMessageType.Photo -> "Photo"
-                      LastMessageType.Video -> "Video"
-                      LastMessageType.File -> "File Attachment"
+                      Text -> lastMsg.content!!
+                      Photo -> "Photo"
+                      Video -> "Video"
+                      File -> "File Attachment"
+                      else -> {""}
                   })
               }
 
@@ -203,13 +210,19 @@ fun TopBar(title:String, icon: ImageVector,viewModel:ChannelsViewModel, navActio
 enum class LastMessageType(var content:String?) {
     Text(content = "null"), Photo(content = null), Video(content = null), File(content = null)
 }
+@ExperimentalAnimationApi
 @ExperimentalComposeUiApi
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
     ConnectifyTheme() {
-        ChannelListScreen(listOf(User(name = "John Smith"),User(name = "John Smith"),
-            User(name = "John Smith"),User(name = "John Smith")))
+        ChannelListScreen(null)
+
     }
 
 }
+
+ const val Text = "Text"
+const val Photo = "Photo"
+const val Video = "Video"
+const val File = "File"

@@ -22,10 +22,9 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class ChatRepositoryImpl @Inject constructor(private val auth: FirebaseAuth, private val database: FirebaseDatabase):ChatRepository {
-    override  fun findContactByName(name: String): Flow<Response<List<ChatRoom?>>> {
+    override  fun findContactByPhone(name: String): Flow<Response<List<ChatRoom?>>> {
        return callbackFlow {
 
-           val context =this.coroutineContext
            trySend(Response.Loading)
            var users:List<User?>? = null
            var rooms:List<ChatRoom?> = listOf()
@@ -125,6 +124,40 @@ class ChatRepositoryImpl @Inject constructor(private val auth: FirebaseAuth, pri
 
         return flow
     }
+
+    override  suspend fun getRoomsDemo(): Response<List<ChatRoom?>> {
+
+        val rooms:MutableList<ChatRoom> = mutableListOf()
+        database.reference.child("users").get().await().children.forEach {
+
+            val user =it.getValue(User::class.java)
+            if ( user?.uid != auth.currentUser?.uid)
+            {
+                val room = ChatRoom(user?.uid+auth.currentUser?.uid,
+                    ChatMessage(),user?.profileImage,user?.name, listOf())
+                rooms.add(room)
+            }
+
+        }
+        if (rooms.isNotEmpty())
+        {
+            rooms.forEach {
+                val response = database.reference.child("lastMsg").child("${it.id}").singleValueEvent()
+                if (response is Response.Success)
+                {
+                    val lastMsg = response.data.getValue(ChatMessage::class.java)
+                    it.lastMessage = lastMsg
+                }
+            }
+        }
+
+        return Response.Success(rooms)
+
+
+    }
+
+
+
 
     override fun signOut(): Flow<Boolean> {
         TODO("Not yet implemented")

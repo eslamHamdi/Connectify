@@ -53,28 +53,28 @@ class ProfileScreenViewModel @Inject constructor(private val useCases: AccountSe
 
     fun createProfile(img: Uri?,name: String)
     {
-      viewModelScope.launch { useCases.createProfile(img,name).collect {
+      viewModelScope.launch {
 
-        when(it)
+        _loadingState.value = true
+
+        when(val response = useCases.createProfile(img,name))
         {
           is Response.Success -> {
 
-            _profileState.value = it.data as String
+            _profileState.value = response.data as String
             _loadingState.value = false
 
           }
           is Response.Error -> {
 
-            _errorState.value = it.message
+            _errorState.value = response.message
             _loadingState.value = false
           }
-          is Response.Loading ->{
 
-            _loadingState.value = true
-          }
+          else -> {}
         }
 
-      }
+
 
 
 
