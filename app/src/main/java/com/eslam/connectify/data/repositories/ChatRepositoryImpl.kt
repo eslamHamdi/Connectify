@@ -111,7 +111,7 @@ class ChatRepositoryImpl @Inject constructor(private val auth: FirebaseAuth, pri
 
          }.catch {
              Log.d(null, "listenToRoomChanges: failed ")
-         }
+         }.flowOn(Dispatchers.IO)
 
 
 

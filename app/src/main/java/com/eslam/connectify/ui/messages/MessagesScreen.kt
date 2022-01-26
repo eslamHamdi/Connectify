@@ -1,6 +1,8 @@
 package com.eslam.connectify.ui.messages
 
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.clickable
@@ -13,23 +15,30 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import com.eslam.connectify.R
 import com.eslam.connectify.domain.models.ChatMessage
 import com.eslam.connectify.domain.models.ChatRoom
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
+@SuppressLint("MutableCollectionMutableState")
 @ExperimentalAnimationApi
 @ExperimentalComposeUiApi
 @Composable
@@ -37,17 +46,34 @@ import kotlinx.coroutines.launch
 fun RoomMessagesScreen(room: ChatRoom,navigator: DestinationsNavigator?)
 {
 
-    val viewModel:ChatRoomViewModel = hiltViewModel()
+    var viewModel:ChatRoomViewModel? = hiltViewModel()
+    val lifecycleOwner = LocalLifecycleOwner.current
 
-    var messagesList = remember{viewModel.messagesState}
+    var messagesList:State<List<ChatMessage>> = viewModel?.messagesState?.collectAsState()!!
 
-val messageState:MutableState<String> = remember{ mutableStateOf("")
 
-}
+
+val messageState:MutableState<String> = remember{ mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+
     DisposableEffect(key1 = viewModel) {
-        viewModel.getMessages(room.id!!)
-        onDispose {  }
+        viewModel?.getMessages(room.id!!)
+        scope.launch {
+            viewModel?.messagesState?.flowWithLifecycle(lifecycleOwner.lifecycle,Lifecycle.State.RESUMED)?.collect{
+
+                //messagesList.value =
+                Log.d("Screen", "RoomMessagesScreen:${messagesList.value} ")
+            }
+        }
+
+        onDispose {
+            viewModel = null
+        }
     }
+
+
+
+
     Scaffold(topBar = { MessagesAppBar(room = room, contactState ="" , navigator = navigator!!)}) {
 
         Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
@@ -56,8 +82,8 @@ val messageState:MutableState<String> = remember{ mutableStateOf("")
             LazyColumn(modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.8f)) {
-                items(messagesList.value){ chatMessage->
-                    Message(msg = chatMessage.content!!, received = (viewModel.getSender() != chatMessage.senderId) )
+                items(messagesList.value.toList()){ chatMessage->
+                    Message(msg = chatMessage.content!!, received = (viewModel?.getSender() != chatMessage.senderId) )
                 }
             }
 
@@ -71,12 +97,20 @@ val messageState:MutableState<String> = remember{ mutableStateOf("")
                 },shape = RoundedCornerShape(8.dp),
                     modifier= Modifier
                         .fillMaxWidth(0.9f)
-                        .align(Alignment.Bottom).padding(4.dp),
+                        .align(Alignment.Bottom)
+                        .padding(4.dp),
                     placeholder = { Text(text = "Messages")})
 
-                   Card(shape = CircleShape, modifier = Modifier.wrapContentSize(align = Alignment.Center).padding(4.dp).
-                   clickable {viewModel.sendingMsg(messageState.value,room)  }) {
-                       Icon(imageVector = Icons.Default.Send, contentDescription = "", modifier = Modifier.size(80.dp).align(Alignment.CenterVertically))
+                   Card(shape = CircleShape, modifier = Modifier
+                       .wrapContentSize(align = Alignment.Center)
+                       .padding(4.dp)
+                       .clickable {
+                           viewModel?.sendingMsg(messageState.value, room)
+                           messageState.value = ""
+                       }) {
+                       Icon(imageVector = Icons.Default.Send, contentDescription = "", modifier = Modifier
+                           .size(80.dp)
+                           .align(Alignment.CenterVertically))
 
                    }
 
@@ -95,4 +129,10 @@ val messageState:MutableState<String> = remember{ mutableStateOf("")
 @Composable
 fun MessagesDefaultPreview() {
     RoomMessagesScreen(room = ChatRoom(name = "Eslam"), navigator = null)
+}
+
+
+fun <T> SnapshotStateList<T>.swapList(newList: List<T>){
+    clear()
+    addAll(newList)
 }

@@ -10,8 +10,10 @@ import com.eslam.connectify.domain.models.Response
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.GenericTypeIndicator
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -75,7 +77,7 @@ class ChatRoomRepositoryImpl @Inject constructor(private val database: FirebaseD
             if (it is Response.Success)
             {
                 var cnt = 0
-                Log.e(null, "getRoomMessages: ${++cnt} ", )
+                //Log.e(null, "getRoomMessages: ${++cnt} ", )
 
                it.data.children.forEach { child->
                     val message =child.getValue(ChatMessage::class.java)
@@ -85,7 +87,7 @@ class ChatRoomRepositoryImpl @Inject constructor(private val database: FirebaseD
                     }
 
                 }
-                Log.e(null, "getRoomMessages2: ${messages} ", )
+                //Log.e(null, "getRoomMessages2: ${messages} ", )
                 response = Response.Success(messages.toList())
 
             }else if (it is Response.Error)
@@ -98,7 +100,7 @@ class ChatRoomRepositoryImpl @Inject constructor(private val database: FirebaseD
 
         }.catch {
             Log.e(null, "getRoomMessages: Failed", )
-        }
+        }.flowOn(Dispatchers.IO)
 
 
 

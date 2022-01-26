@@ -30,7 +30,7 @@ suspend fun DatabaseReference.valueEventFlow(): Flow<Response<DataSnapshot>> = c
             trySend(Response.Loading)
     val valueEventListener = object: ValueEventListener {
         override fun onDataChange(snapshot: DataSnapshot) {
-            trySendBlocking(Response.Success(snapshot))
+            trySend(Response.Success(snapshot))
 
         }
         override fun onCancelled(error: DatabaseError)
