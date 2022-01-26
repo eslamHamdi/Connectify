@@ -8,17 +8,9 @@ import com.eslam.connectify.domain.models.Response
 import com.eslam.connectify.domain.models.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.auth.UserProfileChangeRequest
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
@@ -41,7 +33,7 @@ private val storage:FirebaseStorage):ProfileRepository{
             return (Response.Error("Please Enter Profile Name"))
         }
         Log.e(null, "createProfile: $name", )
-        var user = User(currentUser.uid,name, currentUser.phoneNumber, contacts = listOf())
+        var user = User(currentUser.uid,name, currentUser.phoneNumber, contacts = null)
         if (img != null)
         {
             val storageReference = storage.reference.child("Profiles").child(currentUser.uid)

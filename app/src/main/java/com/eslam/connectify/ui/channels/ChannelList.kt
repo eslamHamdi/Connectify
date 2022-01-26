@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,7 +19,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -42,11 +42,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberImagePainter
 import coil.transform.CircleCropTransformation
 import com.eslam.connectify.R
-import com.eslam.connectify.domain.models.ChatMessage
-import com.eslam.connectify.domain.models.User
+import com.eslam.connectify.domain.models.ChatRoom
+import com.eslam.connectify.ui.destinations.RoomMessagesScreenDestination
 import com.eslam.connectify.ui.theme.ConnectifyTheme
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+
 
 @ExperimentalAnimationApi
 @ExperimentalComposeUiApi
@@ -58,6 +59,7 @@ fun ChannelListScreen(navigator: DestinationsNavigator?)
 //        return@TopBar
 //    }
     val viewModel:ChannelsViewModel = hiltViewModel()
+    viewModel.listenToRooms()
     Scaffold(topBar = {
         SearchBar(searchText = "")
     }
@@ -65,18 +67,26 @@ fun ChannelListScreen(navigator: DestinationsNavigator?)
     ) {
         Surface(modifier = Modifier.fillMaxSize()) {
             val rooms = viewModel.chatRooms
-            val type = LastMessageType.Text
-            type.content = ""
             Box {
-                LazyColumn {
-                    items(rooms.value){ room->
-                        ContactItem({  },room?.imageUrl?:"",room?.name!!,room.lastMessage)
-                    }
-                }
 
                 CircularProgressIndicator(modifier = Modifier
                     .align(Alignment.Center)
                     .alpha(if (viewModel.loadingState.value) 1f else 0f))
+
+                LazyColumn() {
+
+
+                    items(rooms.value.sortedByDescending {
+                        it?.lastMessage?.timeStamp
+                    }){ room->
+                        if (room != null) {
+
+                            ContactItem(navigator,room, )
+                        }
+                    }
+                }
+
+
             }
 
 
@@ -85,15 +95,17 @@ fun ChannelListScreen(navigator: DestinationsNavigator?)
 
 }
 
+  @ExperimentalComposeUiApi
+  @ExperimentalAnimationApi
   @Composable
-  fun ContactItem(onClick:()->Unit,imgSource:String,name:String,lastMsg:ChatMessage?)
+  fun ContactItem(navigator: DestinationsNavigator?,room:ChatRoom)
   {
      
       Card(modifier = Modifier
           .fillMaxWidth()
           .wrapContentHeight(align = Alignment.CenterVertically)
-          .padding(4.dp),
-      elevation = 8.dp, shape = CutCornerShape(topEnd = 18.dp), border = BorderStroke(2.dp,MaterialTheme.colors.secondary)) {
+          .padding(4.dp).clickable {navigator?.navigate(RoomMessagesScreenDestination(room))},
+      elevation = 8.dp, shape = CutCornerShape(topEnd = 18.dp), border = BorderStroke(2.dp,MaterialTheme.colors.secondary),) {
           Row(
               horizontalArrangement = Arrangement.Start,
               verticalAlignment = Alignment.CenterVertically,
@@ -101,16 +113,16 @@ fun ChannelListScreen(navigator: DestinationsNavigator?)
                   .fillMaxWidth()
                   .wrapContentHeight()) {
               
-              ProfilePic(imgSource = imgSource)
+              ProfilePic(imgSource = room.imageUrl!!)
 
               Spacer(modifier = Modifier.padding(4.dp))
 
               Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.Start) {
 
-                  Text(text = name)
-                  Text(text = when(lastMsg?.type){
+                  Text(text = room.name!!)
+                  Text(text = when(room.lastMessage?.type){
 
-                      Text -> lastMsg.content!!
+                      Text -> room.lastMessage?.content!!
                       Photo -> "Photo"
                       Video -> "Video"
                       File -> "File Attachment"
@@ -128,7 +140,7 @@ fun ChannelListScreen(navigator: DestinationsNavigator?)
   }
 
    @Composable
-  fun ProfilePic(imgSource:String)
+  fun ProfilePic(imgSource:String?)
   {
       Card( shape = CircleShape,
 
@@ -137,7 +149,7 @@ fun ChannelListScreen(navigator: DestinationsNavigator?)
               .padding(8.dp)) {
 
 
-          Image(painter = rememberImagePainter(data = imgSource,
+          Image(painter = rememberImagePainter(data = imgSource?:"",
               builder = {
                   crossfade(true)
                   transformations(CircleCropTransformation())

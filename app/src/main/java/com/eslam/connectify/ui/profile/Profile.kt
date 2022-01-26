@@ -80,8 +80,10 @@ fun ProfileScreen(navigator: DestinationsNavigator?)
                     preferences.saveAccountState(id,true)
                 }
 
-                navigator?.navigate(ChannelListScreenDestination)
-                navigator?.popBackStack()
+                navigator?.navigate(ChannelListScreenDestination){
+                   popUpTo("ChannelListScreen")
+                }
+
 
 
             }

@@ -8,15 +8,17 @@ import kotlinx.coroutines.flow.Flow
 interface ChatRepository {
 
 
-    fun findContactByPhone(name:String): Flow<Response<List<ChatRoom?>>>
+   suspend fun findContactByPhone(name:String): Flow<Response<List<ChatRoom?>>>
 
-    fun addContact(userId: String):Flow<Boolean>
+    //fun addContact(userId: String):Flow<Boolean>
+
+  suspend fun listenToRoomChanges():Flow<Response<List<ChatRoom?>>>
 
     fun addRoom(room:ChatRoom,contactId:String):Flow<Boolean>
 
     suspend fun getRooms():Flow<List<ChatRoom?>>
 
-   suspend fun getRoomsDemo(): Response<List<ChatRoom?>>
+   suspend fun getRoomsDemo(): Flow<Response<List<ChatRoom?>>>
 
     fun signOut():Flow<Boolean>
 }

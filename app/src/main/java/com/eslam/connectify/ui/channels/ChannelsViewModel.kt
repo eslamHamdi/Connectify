@@ -12,7 +12,6 @@ import com.eslam.connectify.domain.usecases.ChatsScreenUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -39,6 +38,7 @@ class ChannelsViewModel @Inject constructor(private val chatsScreenUseCases: Cha
 
     init {
         getAvailableChats()
+
 
     }
 
@@ -73,23 +73,25 @@ class ChannelsViewModel @Inject constructor(private val chatsScreenUseCases: Cha
     private fun getAvailableChats()
     {
         viewModelScope.launch {
+             chatsScreenUseCases.getChatsDemo().collect{
+                 when(it)
+                 {
+                     is Response.Success ->{
+                         _chatRooms.value = it.data
+                         _loadingState.value = false
+                     }
 
-            when(val response = chatsScreenUseCases.getChatsDemo())
-                {
-                    is Response.Success ->{
-                        _chatRooms.value = response.data
-                        _loadingState.value = false
-                    }
+                     is Response.Loading ->{
+                         _loadingState.value = true
+                     }
 
-                    is Response.Loading ->{
-                        _loadingState.value = true
-                    }
+                     is Response.Error ->{
+                         Log.e(null, "getAvailableChats: ${it.message}", )
+                         _loadingState.value = false
+                     }
+                 }
+             }
 
-                    is Response.Error ->{
-                        Log.e(null, "getAvailableChats: ${response.message}", )
-                        _loadingState.value = false
-                    }
-                }
 
 
 
@@ -97,4 +99,36 @@ class ChannelsViewModel @Inject constructor(private val chatsScreenUseCases: Cha
         }
 
     }
+
+
+        fun listenToRooms()
+       {
+           viewModelScope.launch {
+               chatsScreenUseCases.listenToAddedRooms().collect{response->
+                   when(response)
+                   {
+                       is Response.Success ->{
+                           val upDateList = _chatRooms.value.toMutableList()
+
+                           response.data.forEach {
+                               val id = it?.id
+                               upDateList.forEach { old->
+                                   if (old?.id == id)
+                                   {
+                                      old?.apply {
+                                          lastMessage = it?.lastMessage
+                                          name = it?.name
+                                          imageUrl = it?.imageUrl
+                                      }
+                                   }
+                               }
+                           }
+
+                           _chatRooms.value = upDateList
+                       }
+                       else -> {}
+                   }
+               }
+           }
+       }
 }
