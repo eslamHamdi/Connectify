@@ -12,6 +12,9 @@ import com.eslam.connectify.domain.usecases.ChatsScreenUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -22,6 +25,13 @@ class ChannelsViewModel @Inject constructor(private val chatsScreenUseCases: Cha
 
     val chatRooms:State<List<ChatRoom?>>
     get() = _chatRooms
+
+    private var _chatRoomsUpdated: MutableStateFlow<ChatRoom?> = MutableStateFlow(ChatRoom())
+
+    val chatRoomsUpdated: StateFlow<ChatRoom?>
+        get() = _chatRoomsUpdated
+
+
 
 
     private var _loadingState:MutableState<Boolean> = mutableStateOf(false)
@@ -37,8 +47,9 @@ class ChannelsViewModel @Inject constructor(private val chatsScreenUseCases: Cha
     private var job:Job? = null
 
     init {
-        getAvailableChats()
 
+
+      listenToUpdates()
 
     }
 
@@ -70,7 +81,7 @@ class ChannelsViewModel @Inject constructor(private val chatsScreenUseCases: Cha
         }
     }
 
-    private fun getAvailableChats()
+    fun getAvailableChats()
     {
         viewModelScope.launch {
              chatsScreenUseCases.getChatsDemo().collect{
@@ -101,34 +112,74 @@ class ChannelsViewModel @Inject constructor(private val chatsScreenUseCases: Cha
     }
 
 
-        fun listenToRooms()
+       private fun listenToRooms()
        {
            viewModelScope.launch {
-               chatsScreenUseCases.listenToAddedRooms().collect{response->
+               chatsScreenUseCases.listenToAddedRooms().stateIn(viewModelScope).collect{response->
                    when(response)
                    {
                        is Response.Success ->{
                            val upDateList = _chatRooms.value.toMutableList()
-
-                           response.data.forEach {
-                               val id = it?.id
-                               upDateList.forEach { old->
-                                   if (old?.id == id)
-                                   {
-                                      old?.apply {
-                                          lastMessage = it?.lastMessage
-                                          name = it?.name
-                                          imageUrl = it?.imageUrl
-                                      }
+                           if (response.data.isNotEmpty())
+                           {
+                               response.data.forEach {
+                                   val id = it?.id
+                                   upDateList.forEach { old->
+                                       if (old?.id == id)
+                                       {
+                                           old?.apply {
+                                               lastMessage = it?.lastMessage
+                                               name = it?.name
+                                               imageUrl = it?.imageUrl
+                                           }
+                                       }
                                    }
                                }
+
+                               _chatRooms.value = upDateList.toList()
+                               Log.e("newRoomUpdate", "listenToRooms: ${_chatRooms.value} ", )
                            }
 
-                           _chatRooms.value = upDateList
                        }
                        else -> {}
                    }
+
                }
+
+
            }
        }
+
+
+
+
+    private fun listenToUpdates()
+    {
+        viewModelScope.launch {
+            chatsScreenUseCases.listenToRoomsChanges().collect{
+
+                when(it)
+                {
+                    is Response.Success -> {
+                        val newRoom = it.data
+                        val newList = _chatRooms.value.toMutableList()
+                        newList.forEach { oldRoom->
+                            if (newRoom.id == oldRoom?.id)
+                            {
+                                oldRoom?.apply {
+                                    lastMessage = newRoom?.lastMessage
+                                    name = newRoom?.name
+                                    imageUrl = newRoom?.imageUrl
+                                }
+                            }
+                            Log.e("oldRoom", "listenToUpdates: $oldRoom ", )
+                            _chatRooms.value = listOf()
+                            _chatRooms.value = newList.toList()
+                        }
+                    }
+                    else ->{}
+                }
+            }
+        }
+    }
 }

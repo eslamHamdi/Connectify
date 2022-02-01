@@ -12,7 +12,8 @@ interface ChatRepository {
 
     //fun addContact(userId: String):Flow<Boolean>
 
-  suspend fun listenToRoomChanges():Flow<Response<List<ChatRoom?>>>
+  suspend fun listenToRoomsAdded():Flow<Response<List<ChatRoom?>>>
+  suspend fun listenToRoomChanges(): Flow<Response<ChatRoom>?>
 
     fun addRoom(room:ChatRoom,contactId:String):Flow<Boolean>
 

@@ -32,14 +32,17 @@ class ChatRoomRepositoryImpl @Inject constructor(private val database: FirebaseD
 
                 val roomList = contactsMap?.values
                 val senderId:String? = msg.senderId
-                val receiverId = room.id?.substringBefore("_")
+                val receiverId : String? = if(room.id?.substringBefore("_") == auth.currentUser?.uid!!) room.id.substringAfter("_") else room.id?.substringBefore("_")
                 var added = false
                 roomList?.forEach {
-                    if (it?.substringAfter("_") == receiverId || it?.substringBefore("_")== receiverId)
+                    if (it?.substringAfter("_") == receiverId as String || it?.substringBefore("_")== receiverId.toString())
                     {
                         added = true
                     }
                 }
+               room.lastMessage = msg
+                val roomUpdate:MutableMap<String,Any> = mutableMapOf()
+               roomUpdate[room.id!!] = room
 
 
                 //database.reference.child("notifications").child(auth.currentUser!!.uid)
@@ -47,12 +50,17 @@ class ChatRoomRepositoryImpl @Inject constructor(private val database: FirebaseD
                 if (roomList.isNullOrEmpty() || !added) {
                     database.reference.child("messages").child(room.id!!).push().setValue(msg).await()
                     database.reference.child("users").child(auth.currentUser?.uid!!).child("contacts").push().setValue(room.id).await()
-                    database.reference.child("Rooms").child(room.id).setValue(room).await()
-                    database.reference.child("Rooms").child(room.id).child("lastMessage").setValue(msg).await()
-                    database.reference.child("users").child(receiverId!!).child("contacts").push().setValue(room.id).await()
+                    database.reference.child("Rooms").child(auth.currentUser?.uid!!).child(room.id).setValue(room).await()
+                    database.reference.child("Rooms").child(auth.currentUser?.uid!!).child(room.id).child("lastMessage").setValue(msg).await()
+                    database.reference.child("Rooms").child(receiverId!! as String).child(room.id).setValue(room).await()
+                   database.reference.child("Rooms").child(receiverId as String).child(room.id).child("lastMessage").setValue(msg).await()
+                    database.reference.child("users").child(receiverId as String).child("contacts").push().setValue(room.id).await()
 
                 }else {
-                    database.reference.child("Rooms").child(room.id!!).child("lastMessage").setValue(msg).await()
+                    //database.reference.child("Rooms").child(auth.currentUser?.uid!!).child(room.id!!).child("lastMessage").setValue(msg).await()
+                    database.reference.child("Rooms").child(auth.currentUser?.uid!!).updateChildren(roomUpdate).await()
+                    database.reference.child("Rooms").child(receiverId!! as String).updateChildren(roomUpdate).await()
+                   // database.reference.child("Rooms").child(receiverId!!).child(room.id).child("lastMessage").setValue(msg).await()
                     database.reference.child("messages").child(room.id).push().setValue(msg).await()
                 }
             }

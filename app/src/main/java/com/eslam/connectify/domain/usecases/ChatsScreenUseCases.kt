@@ -18,7 +18,9 @@ class ChatsScreenUseCases @Inject constructor(private val repository: ChatReposi
     suspend fun getChatsDemo()=repository.getRoomsDemo()
 
 
-    suspend fun listenToAddedRooms() = repository.listenToRoomChanges()
+    suspend fun listenToAddedRooms() = repository.listenToRoomsAdded()
+
+    suspend fun listenToRoomsChanges() = repository.listenToRoomChanges()
 
 
     fun signOut() = repository.signOut()

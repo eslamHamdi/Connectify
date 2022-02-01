@@ -20,10 +20,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -59,7 +56,12 @@ fun ChannelListScreen(navigator: DestinationsNavigator?)
 //        return@TopBar
 //    }
     val viewModel:ChannelsViewModel = hiltViewModel()
-    viewModel.listenToRooms()
+
+
+    LaunchedEffect(key1 = Unit,)
+    {
+        viewModel.getAvailableChats()
+    }
     Scaffold(topBar = {
         SearchBar(searchText = "")
     }
@@ -104,7 +106,8 @@ fun ChannelListScreen(navigator: DestinationsNavigator?)
       Card(modifier = Modifier
           .fillMaxWidth()
           .wrapContentHeight(align = Alignment.CenterVertically)
-          .padding(4.dp).clickable {navigator?.navigate(RoomMessagesScreenDestination(room))},
+          .padding(4.dp)
+          .clickable { navigator?.navigate(RoomMessagesScreenDestination(room)) },
       elevation = 8.dp, shape = CutCornerShape(topEnd = 18.dp), border = BorderStroke(2.dp,MaterialTheme.colors.secondary),) {
           Row(
               horizontalArrangement = Arrangement.Start,
@@ -113,7 +116,7 @@ fun ChannelListScreen(navigator: DestinationsNavigator?)
                   .fillMaxWidth()
                   .wrapContentHeight()) {
               
-              ProfilePic(imgSource = room.imageUrl!!)
+              ProfilePic(imgSource = room.imageUrl)
 
               Spacer(modifier = Modifier.padding(4.dp))
 
@@ -127,7 +130,7 @@ fun ChannelListScreen(navigator: DestinationsNavigator?)
                       Video -> "Video"
                       File -> "File Attachment"
                       else -> {""}
-                  })
+                  }, maxLines = 1)
               }
 
 
@@ -149,7 +152,7 @@ fun ChannelListScreen(navigator: DestinationsNavigator?)
               .padding(8.dp)) {
 
 
-          Image(painter = rememberImagePainter(data = imgSource?:"",
+          Image(painter = rememberImagePainter(data = imgSource?:R.drawable.ic_avatar,
               builder = {
                   crossfade(true)
                   transformations(CircleCropTransformation())

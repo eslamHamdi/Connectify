@@ -6,11 +6,7 @@ import com.eslam.connectify.data.utils.valueEventFlow
 import com.eslam.connectify.domain.datasources.ChatRepository
 import com.eslam.connectify.domain.models.*
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
-import com.google.firebase.database.ktx.getValue
+import com.google.firebase.database.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
@@ -71,7 +67,7 @@ class ChatRepositoryImpl @Inject constructor(private val auth: FirebaseAuth, pri
        }
     }
 
-    override suspend fun listenToRoomChanges(): Flow<Response<List<ChatRoom?>>> {
+    override suspend fun listenToRoomsAdded(): Flow<Response<List<ChatRoom?>>> {
 
         val rooms:MutableList<ChatRoom> = mutableListOf()
      return  database.reference.child("users").child(auth.currentUser?.uid!!).child("contacts")
@@ -79,10 +75,12 @@ class ChatRepositoryImpl @Inject constructor(private val auth: FirebaseAuth, pri
 
                if (value is Response.Success)
                {
+
                    val roomsIds =value.data.value as Map<*,*>?
+                   //Log.e("RoomsUpdates", "listenToRoomsAdded:$roomsIds", )
                    roomsIds?.forEach {
                        val roomId = it.value as String?
-                       val room = database.reference.child("Rooms").child(roomId!!).get().await().getValue(ChatRoom::class.java)
+                       val room = database.reference.child("Rooms").child(auth.currentUser?.uid!!).child(roomId!!).get().await().getValue(ChatRoom::class.java)
                        val participant1 = room?.id?.substringBefore("_")
                        val participant2 = room?.id?.substringAfter("_")
                        val currentUser = auth.currentUser!!.uid
@@ -98,9 +96,11 @@ class ChatRepositoryImpl @Inject constructor(private val auth: FirebaseAuth, pri
                                room.name = database.reference.child("users").child(participant2!!).child("name").get().await().getValue(String::class.java)
                            }
                            rooms.add(room)
+
                        }
                    }
                   emit(Response.Success(rooms))
+                   Log.e("RoomsUpdates", "listenToRoomsAdded:$rooms", )
                }else if (value is Response.Error)
                {
                    emit(Response.Error("failed to get rooms updates"))
@@ -110,25 +110,52 @@ class ChatRepositoryImpl @Inject constructor(private val auth: FirebaseAuth, pri
                }
 
          }.catch {
-             Log.d(null, "listenToRoomChanges: failed ")
-         }.flowOn(Dispatchers.IO)
+             Log.d("RoomUpdates", "listenToRoomsAdded: failed ")
+         }
 
 
 
     }
 
-//    override fun addContact(userId: String): Flow<Boolean> {
-//
-//       return flow {
-//           database.reference.child("users").child(auth.currentUser?.uid!!)
-//               .child("contacts").push().setValue(userId).await()
-//
-//           emit(true)
-//
-//       }.catch {
-//           emit(false)
-//       }
-//    }
+    override suspend fun listenToRoomChanges(): Flow<Response<ChatRoom>?> {
+        return callbackFlow {
+
+            val roomsRef =database.reference.child("Rooms").child(auth.currentUser?.uid!!)
+
+            val childEventListener:ChildEventListener = object :ChildEventListener{
+                override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+
+                }
+
+                override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+
+                    trySend(Response.Success(snapshot.getValue(ChatRoom::class.java)!!))
+                }
+
+                override fun onChildRemoved(snapshot: DataSnapshot) {
+
+                }
+
+                override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
+
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    TODO("Not yet implemented")
+                }
+
+            }
+
+            roomsRef.addChildEventListener(childEventListener)
+
+            awaitClose {
+                roomsRef.removeEventListener(childEventListener)
+            }
+
+
+        }
+    }
+
 
     override fun addRoom(room: ChatRoom,contactId:String): Flow<Boolean> {
 
@@ -186,7 +213,9 @@ class ChatRepositoryImpl @Inject constructor(private val auth: FirebaseAuth, pri
         return flow {
             emit(Response.Loading)
             val rooms:MutableList<ChatRoom> = mutableListOf()
-            val usersId:MutableList<User> = mutableListOf()
+            val users:MutableList<User> = mutableListOf()
+            var notContact:List<User>? = null
+            val remainingRooms:MutableList<ChatRoom> = mutableListOf()
 
             val contactsSnap = database.reference.child("users").
             child(auth.currentUser?.uid!!).child("contacts").singleValueEvent()
@@ -196,16 +225,17 @@ class ChatRepositoryImpl @Inject constructor(private val auth: FirebaseAuth, pri
 
             if (contactsSnap is Response.Success && contactsSnap.data.value != null)
             {
-                Log.e(null, "getRoomsDemoCont:  ${contactsSnap.data}", )
+                Log.e("ContactsOnly", "getRoomsDemoCont:  ${contactsSnap.data}", )
                val list = contactsSnap.data.value as Map<*, *>
-                    list?.let { map->
-                        map.forEach {
+                if (list.isNotEmpty())
+                {
+                    list.forEach {
                             //val user = it.value
                             val contact: String = it.value as String
-                            Log.e(null, "getRoomsDemo0: $contact ", )
+                            //Log.e(null, "getRoomsDemo0: $contact ", )
                             if (contact.isNotBlank()) {
 
-                                val roomSnap = database.reference.child("Rooms").child(contact!!).get().await()
+                                val roomSnap = database.reference.child("Rooms").child(auth.currentUser?.uid!!).child(contact!!).get().await()
                                 var room = roomSnap.getValue(ChatRoom::class.java)
                                 room?.lastMessage = roomSnap.child("lastMessage").getValue(ChatMessage::class.java)
                                 val participant1 = room?.id?.substringBefore("_")
@@ -226,93 +256,110 @@ class ChatRepositoryImpl @Inject constructor(private val auth: FirebaseAuth, pri
                                 }
                             }
                         }
-                    }
+
+                }
+
             }
 
 
-            if (usersSnap is Response.Success)
-            {
-               val list = usersSnap.data.children
-                list.forEach {
+            if (usersSnap is Response.Success) {
+                val list = usersSnap.data.children.toList()
 
-                    Log.e(null, "getRoomsDemo: $it",)
+                Log.e("AllUsers", "getRoomsDemo: $list ",)
+
+                list?.forEach {
+
+                    // Log.e(null, "getRoomsDemo: $it",)
                     //val user = it.getValue(User::class.java)
-                    val id : String = it.child("uid").getValue(String::class.java)!!
-                    val name : String = it.child("name").getValue(String::class.java)!!
-                    Log.e(null, "getRoomsDemoNameTest: $name",)
-                    val phone : String = it.child("phone").getValue(String::class.java)!!
-                    val img : String = it.child("profileImage").getValue(String::class.java)!!
+                    val id: String = it.child("uid").getValue(String::class.java)!!
+                    val name: String = it.child("name").getValue(String::class.java)!!
+                    //Log.e(null, "getRoomsDemoNameTest: $name",)
+                    val phone: String = it.child("phone").getValue(String::class.java)!!
+                    val img: String? = it.child("profileImage").getValue(String::class.java)
                     val contacts = it.child("contacts").value as Map<*, *>?
 //                    val contactList = it
 //                    user?.contacts = contactList
-                    val user = if(contacts.isNullOrEmpty())User(id,name,phone,img, contacts) else User(id,name,phone,img)
-                    //usersId.add(user!!)
-                    Log.e(null, "getRoomsDemo2: $user",)
+                    val user = if (contacts?.isNotEmpty() == true) User(
+                        id,
+                        name,
+                        phone,
+                        img,
+                        contacts
+                    ) else User(id, name, phone, img)
+                    users.add(user)
+                    //  Log.e(null, "getRoomsDemo2: $user",)
+                }
+
+            }
                     if (rooms.isNotEmpty())
                     {
-                        val roomList:MutableList<ChatRoom> = mutableListOf()
-                        Log.e(null, "getRoomsDemolist1: ${rooms.toList()}", )
-                        rooms.forEach { chatRoom->
-                            Log.e(null, "getRoomsDemo3: $it",)
 
-                            if (!(chatRoom.id?.contains(user?.uid!!))!!) {
 
-                                if ( user?.uid != auth.currentUser?.uid)
+                        Log.e("rooms of contacts", "getRoomsDemolist: ${rooms.toList()}", )
+                        rooms.forEach { chatRoom ->
+                            //  Log.e(null, "getRoomsDemo3: $it",)
+
+                            notContact = users.filter { user ->
+                                user.uid != chatRoom.id?.substringAfter("_") && user.uid != chatRoom.id?.substringBefore(
+                                    "_"
+                                )
+                            }
+
+                        }
+
+                        if (notContact != null && notContact!!.isNotEmpty())
+                        {
+                            notContact?.forEach { user->
+                                if ( user.uid != auth.currentUser?.uid)
                                 {
+                                    Log.e("filterContacts", "getRoomsDemo: $user", )
 
                                     //user?.uid+auth.currentUser?.uid
                                     val room = ChatRoom(user?.uid+"_"+auth.currentUser?.uid,
                                         ChatMessage(),user?.profileImage,user?.name, )
 
-                                    roomList.add(room)
+                                    remainingRooms.add(room)
                                 }
-
                             }
 
 
+
+
+
+
+                            if (remainingRooms.isNotEmpty()) {
+                                rooms.addAll(remainingRooms)
+                                Log.e("filteredContacts", "getRoomsDemo: $remainingRooms ", )
+                            }
                         }
-                        if (roomList.isNotEmpty()) {
-                            rooms.addAll(roomList)
-                        }
+
                     }else
                     {
-                        if ( user?.uid != auth.currentUser?.uid)
-                        {
+                        users.forEach { user ->
+                            if ( user?.uid != auth.currentUser?.uid)
+                            {
 
-                            //user?.uid+auth.currentUser?.uid
-                            val room = ChatRoom(user?.uid+"_"+auth.currentUser?.uid,
-                                ChatMessage(),user?.profileImage,user?.name, )
-                            rooms.add(room)
+                                // Log.e(null, "getRoomsDemo: rooms is empty +  $user", )
+                                //user?.uid+auth.currentUser?.uid
+                                val room = ChatRoom(
+                                    user.uid +"_"+auth.currentUser?.uid,
+                                    ChatMessage(), user.profileImage, user.name, )
+                                rooms.add(room)
+                            }
                         }
+
                     }
+                   // Log.e(null, "getRoomsDemolist0: ${rooms.toList()}", )
 
-                }
-
-
-
-//                if ( rooms.isNotEmpty())
-//                {
-//                    Log.e(null, "getRoomsDemo4: ", )
-//                    rooms.forEach {
-//                        val response = database.reference.child("${it.id}").child("lastMessage").singleValueEvent()
-//                        if (response is Response.Success)
-//                        {
-//                            val lastMsg = response.data.getValue(ChatMessage::class.java)
-//                            it.lastMessage = lastMsg
-//                        }
-//                    }
-//
-//                }
+            if (rooms.isNotEmpty())
+            {
                 emit(Response.Success(rooms.toList()))
-                Log.e(null, "getRoomsDemolist1: ${rooms.toList()}", )
+
             }
 
-
-
-            emit(Response.Success(rooms.toList()))
-            Log.e(null, "getRoomsDemolist2: ${rooms.toList()}", )
         }.catch {
             //Response.Error("failed to get rooms")
+            Log.e("TAG", "getRoomsDemo: Error getting rooms", )
         }
 
 
