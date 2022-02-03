@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.util.Log
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,9 +22,11 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -38,6 +41,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
+@ExperimentalUnitApi
 @SuppressLint("MutableCollectionMutableState")
 @ExperimentalAnimationApi
 @ExperimentalComposeUiApi
@@ -49,7 +53,11 @@ fun RoomMessagesScreen(room: ChatRoom,navigator: DestinationsNavigator?)
     var viewModel:ChatRoomViewModel? = hiltViewModel()
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    var messagesList:State<List<ChatMessage>> = viewModel?.messagesState?.collectAsState()!!
+    val messagesList:State<List<ChatMessage>> = viewModel?.messagesState?.collectAsState()!!
+    val contactStatus:State<String> = remember {
+        viewModel!!.contactState
+    }
+
 
 
 
@@ -58,13 +66,6 @@ val messageState:MutableState<String> = remember{ mutableStateOf("") }
 
     DisposableEffect(key1 = viewModel) {
         viewModel?.getMessages(room.id!!)
-        scope.launch {
-            viewModel?.messagesState?.flowWithLifecycle(lifecycleOwner.lifecycle,Lifecycle.State.RESUMED)?.collect{
-
-                //messagesList.value =
-                Log.d("Screen", "RoomMessagesScreen:${messagesList.value} ")
-            }
-        }
 
         onDispose {
             viewModel = null
@@ -74,7 +75,7 @@ val messageState:MutableState<String> = remember{ mutableStateOf("") }
 
 
 
-    Scaffold(topBar = { MessagesAppBar(room = room, contactState ="" , navigator = navigator!!)}) {
+    Scaffold(topBar = { MessagesAppBar(room = room, contactState =contactStatus.value , navigator = navigator!!)}) {
 
         Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
 
@@ -94,6 +95,17 @@ val messageState:MutableState<String> = remember{ mutableStateOf("") }
 
                 OutlinedTextField(value = messageState.value, onValueChange ={
                     messageState.value = it
+
+                    if (it.isNotEmpty())
+                    {
+                        viewModel!!.sendUserTypingState("Typing",room.id!!,it)
+                    }else
+                    {
+                        viewModel!!.sendUserTypingState("Online",room.id!!,it)
+                    }
+
+
+
                 },shape = RoundedCornerShape(8.dp),
                     modifier= Modifier
                         .fillMaxWidth(0.9f)
@@ -102,14 +114,15 @@ val messageState:MutableState<String> = remember{ mutableStateOf("") }
                     placeholder = { Text(text = "Messages")})
 
                    Card(shape = CircleShape, modifier = Modifier
-                       .wrapContentSize(align = Alignment.Center)
+                       .wrapContentSize()
                        .padding(4.dp)
                        .clickable {
                            viewModel?.sendingMsg(messageState.value, room)
                            messageState.value = ""
+                           viewModel!!.sendUserTypingState("Online",room.id!!,"")
                        }) {
                        Icon(imageVector = Icons.Default.Send, contentDescription = "", modifier = Modifier
-                           .size(80.dp)
+                           .size(40.dp)
                            .align(Alignment.CenterVertically))
 
                    }
@@ -123,6 +136,7 @@ val messageState:MutableState<String> = remember{ mutableStateOf("") }
 
 }
 
+@ExperimentalUnitApi
 @ExperimentalAnimationApi
 @ExperimentalComposeUiApi
 @Preview(showBackground = true)

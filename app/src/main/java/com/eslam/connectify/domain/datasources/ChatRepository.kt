@@ -10,16 +10,12 @@ interface ChatRepository {
 
    suspend fun findContactByPhone(name:String): Flow<Response<List<ChatRoom?>>>
 
-    //fun addContact(userId: String):Flow<Boolean>
-
   suspend fun listenToRoomsAdded():Flow<Response<List<ChatRoom?>>>
   suspend fun listenToRoomChanges(): Flow<Response<ChatRoom>?>
 
-    fun addRoom(room:ChatRoom,contactId:String):Flow<Boolean>
-
-    suspend fun getRooms():Flow<List<ChatRoom?>>
-
    suspend fun getRoomsDemo(): Flow<Response<List<ChatRoom?>>>
+
+   suspend fun setUserState(state:String)
 
     fun signOut():Flow<Boolean>
 }

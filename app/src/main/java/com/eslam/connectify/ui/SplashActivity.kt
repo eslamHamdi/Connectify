@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.lifecycle.lifecycleScope
 import com.eslam.connectify.R
 import dagger.hilt.android.AndroidEntryPoint
@@ -16,7 +17,9 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 @ExperimentalComposeUiApi
 @ExperimentalAnimationApi
+@ExperimentalUnitApi
 class SplashActivity : AppCompatActivity() {
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {

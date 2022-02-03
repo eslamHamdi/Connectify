@@ -6,4 +6,7 @@ import javax.inject.Inject
 
 @HiltAndroidApp
 class ConnectifyApp: Application() {
+
+
+
 }

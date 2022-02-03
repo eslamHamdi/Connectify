@@ -8,13 +8,10 @@ import com.eslam.connectify.domain.models.ChatMessage
 import com.eslam.connectify.domain.models.ChatRoom
 import com.eslam.connectify.domain.models.Response
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.GenericTypeIndicator
+import com.google.firebase.database.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -118,6 +115,74 @@ class ChatRoomRepositoryImpl @Inject constructor(private val database: FirebaseD
 
     override fun getSenderId(): String? {
         return auth.currentUser?.uid
+    }
+
+    override suspend fun sendUserActivityState(status: String,roomId: String) {
+
+        database.reference.child("chatStates").child(roomId).child(auth.currentUser?.uid!!).setValue(status)
+    }
+
+    override fun getContactStatus(roomId:String): Flow<String> {
+        return callbackFlow {
+
+
+            val contactId = if (roomId.substringAfter("_") == auth.currentUser?.uid!!) roomId.substringBefore("_") else roomId.substringAfter("_")
+           val ref =  database.reference.child("usersStates").child(contactId)
+
+
+            val stateListener = object:ValueEventListener{
+                override fun onDataChange(snapshot: DataSnapshot) {
+
+                    snapshot.children.toList()
+                    Log.e("State", "onDataChange: $snapshot ", )
+                    trySend(snapshot.getValue(String::class.java)!!)
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+
+                }
+
+            }
+
+            ref.addValueEventListener(stateListener)
+
+            awaitClose {
+                ref.removeEventListener(stateListener)
+            }
+
+
+        }
+    }
+
+    override suspend fun getContactTypingState(roomId:String): Flow<Response<Boolean>> {
+        return callbackFlow {
+            val contactId:String = if (roomId.substringAfter("_")==auth.currentUser?.uid!!) roomId.substringBefore("_") else
+                roomId.substringAfter("_")
+            val ref =database.reference.child("chatStates").child(roomId).child(contactId)
+
+            val valueListener = object:ValueEventListener{
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val state = snapshot.getValue(String::class.java)
+                    if (state == "Typing") {
+                        trySend(Response.Success(true))
+                    }else {
+                        trySend(Response.Success(false))
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    TODO("Not yet implemented")
+                }
+
+            }
+
+            ref.addValueEventListener(valueListener)
+
+            awaitClose {
+                ref.removeEventListener(valueListener)
+            }
+
+        }
     }
 
 

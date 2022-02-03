@@ -7,13 +7,8 @@ import javax.inject.Inject
 class ChatsScreenUseCases @Inject constructor(private val repository: ChatRepository) {
 
 
-    suspend fun searchForContacts(name:String) = repository.findContactByPhone(name)
+    suspend fun searchForContacts(phone:String) = repository.findContactByPhone(phone)
 
-   suspend fun getSavedChatRooms() = repository.getRooms()
-
-    fun addRoom(chatRoom: ChatRoom,id:String) = repository.addRoom(chatRoom,id)
-
-   // fun addContactToList(userId: String) = repository.addContact(userId)
 
     suspend fun getChatsDemo()=repository.getRoomsDemo()
 
@@ -21,6 +16,8 @@ class ChatsScreenUseCases @Inject constructor(private val repository: ChatReposi
     suspend fun listenToAddedRooms() = repository.listenToRoomsAdded()
 
     suspend fun listenToRoomsChanges() = repository.listenToRoomChanges()
+
+    suspend fun setUserInitialFinalState(state:String)=repository.setUserState(state)
 
 
     fun signOut() = repository.signOut()

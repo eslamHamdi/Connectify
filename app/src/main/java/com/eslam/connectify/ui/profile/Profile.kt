@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -38,6 +39,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
+@ExperimentalUnitApi
 @ExperimentalAnimationApi
 @ExperimentalComposeUiApi
 @Destination
@@ -160,6 +162,7 @@ fun ProfileScreen(navigator: DestinationsNavigator?)
 
 
 
+@ExperimentalUnitApi
 @ExperimentalAnimationApi
 @ExperimentalComposeUiApi
 @Preview(showBackground = true)

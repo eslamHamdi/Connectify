@@ -12,4 +12,10 @@ interface ChatRoomRepository {
    suspend fun getRoomMessages(roomId:String):Flow<Response<List<ChatMessage>?>?>
 
    fun getSenderId():String?
+
+   suspend fun sendUserActivityState(status:String,roomId: String)
+
+   fun getContactStatus(roomId:String):Flow<String>
+
+   suspend fun getContactTypingState(roomId:String):Flow<Response<Boolean>>
 }

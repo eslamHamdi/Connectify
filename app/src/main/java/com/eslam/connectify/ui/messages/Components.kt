@@ -16,10 +16,10 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.dp
 import com.eslam.connectify.domain.models.ChatRoom
 import com.eslam.connectify.ui.channels.ProfilePic
-import com.eslam.connectify.ui.destinations.ChannelListScreenDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
 
@@ -61,6 +61,7 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
 
 
+  @ExperimentalUnitApi
   @ExperimentalComposeUiApi
   @ExperimentalAnimationApi
   @Composable
@@ -75,7 +76,7 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
               ProfilePic(imgSource = room.imageUrl)
               Column() {
                   Text(text =room.name?:"Eslam", modifier = Modifier.wrapContentSize())
-                  Text(text =contactState )
+                  Text(text =contactState)
               }
 
 
@@ -90,6 +91,7 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
   }
 
 
+@ExperimentalUnitApi
 @ExperimentalAnimationApi
 @ExperimentalComposeUiApi
 @Composable

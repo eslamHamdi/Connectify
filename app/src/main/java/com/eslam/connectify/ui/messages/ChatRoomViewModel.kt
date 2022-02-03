@@ -20,12 +20,19 @@ import javax.inject.Inject
 @HiltViewModel
 class ChatRoomViewModel @Inject constructor(private val chatUseCases:ChatRoomUseCases,savedStateHandle: SavedStateHandle):ViewModel() {
 
-    @SuppressLint("MutableCollectionMutableState")
+
      private var _messagesState: MutableStateFlow<List<ChatMessage>> = MutableStateFlow(
         listOf())
 
     val messagesState: StateFlow<List<ChatMessage>>
     get() = _messagesState
+
+    private var _contactState: MutableState<String> = mutableStateOf(
+        "Offline")
+
+    val contactState: State<String>
+        get() = _contactState
+
 
     val roomId = savedStateHandle.get<ChatRoom>("room")?.id
 
@@ -33,6 +40,10 @@ class ChatRoomViewModel @Inject constructor(private val chatUseCases:ChatRoomUse
 
     init {
         Log.e(null, "RoomId: $roomId ", )
+        if (roomId != null) {
+            getContactState(roomId)
+            getContactTypingStatus(roomId)
+        }
 
     }
     fun getMessages(roomId:String) {
@@ -99,4 +110,61 @@ class ChatRoomViewModel @Inject constructor(private val chatUseCases:ChatRoomUse
             chatUseCases.sendMessage(chatMessage,room)
         }
     }
+
+
+    private fun getContactState(contactId:String)
+    {
+        viewModelScope.launch {
+            chatUseCases.getContactState(contactId).collect{
+                _contactState.value = it
+
+            }
+        }
+
+
+    }
+
+    fun sendUserTypingState(state:String,roomId: String,content:String)
+    {
+
+            viewModelScope.launch {
+
+                    chatUseCases.sendUserStatus(state, roomId)
+
+            }
+
+
+
+    }
+
+    fun getContactTypingStatus(roomId:String)
+    {
+        viewModelScope.launch {
+            chatUseCases.getContactTypingState(roomId).collect{
+
+                when(it)
+                {
+                    is Response.Success -> {
+                        if (it.data)
+                            _contactState.value = "Typing..."
+                        else
+                            _contactState.value = "Online"
+                    }
+                    else ->{}
+                }
+            }
+
+
+            }
+
+
+    }
+
+
+
+
+
+
+
+
 }

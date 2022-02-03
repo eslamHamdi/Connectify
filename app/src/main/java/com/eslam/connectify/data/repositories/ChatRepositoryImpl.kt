@@ -157,56 +157,7 @@ class ChatRepositoryImpl @Inject constructor(private val auth: FirebaseAuth, pri
     }
 
 
-    override fun addRoom(room: ChatRoom,contactId:String): Flow<Boolean> {
 
-        return flow {
-            val id = auth.currentUser?.uid  + contactId
-            database.reference.child("Rooms").child(id).setValue(room).await()
-            emit(true)
-        }.catch {
-            emit(false)
-        }
-    }
-
-    override suspend fun getRooms(): Flow<List<ChatRoom?>> {
-
-            var contacts:MutableList<String?> = mutableListOf()
-            val users:MutableList<ChatRoom> = mutableListOf()
-
-
-
-           val flow = database.reference.child("users").child(auth.currentUser!!.uid).child("contacts").valueEventFlow()
-                .map {
-                    if (it is Response.Success)
-                    {
-                       contacts= it.data.children.map { data->
-                            data.getValue(String::class.java)
-                        }.toMutableList()
-                        if (contacts.isNotEmpty())
-                        {
-                            contacts.forEach { contact->
-                                var response =database.reference.child("Rooms").child(contact!!).singleValueEvent()
-                                if (response is Response.Success)
-                                {
-                                    users.add(response.data.getValue(ChatRoom::class.java)!!)
-
-                                }
-
-
-                            }
-                        }
-
-                    }
-                    users
-
-                }.catch {
-                   Log.e(null, "getRooms: Failed to fetch saved rooms ", )
-               }
-
-
-
-        return flow
-    }
 
     override  suspend fun getRoomsDemo(): Flow<Response<List<ChatRoom?>>> {
         //Response.Error(e.message!!)
@@ -365,13 +316,15 @@ class ChatRepositoryImpl @Inject constructor(private val auth: FirebaseAuth, pri
 
         }
 
+    override suspend fun setUserState(state: String) {
+        try {
+            database.reference.child("usersStates").child(auth.currentUser?.uid!!).setValue(state).await()
+        }catch (e:Exception)
+        {
+            Log.e(null, "setUserState: Failed", )
+        }
 
-
-
-
-
-
-
+    }
 
 
     override fun signOut(): Flow<Boolean> {

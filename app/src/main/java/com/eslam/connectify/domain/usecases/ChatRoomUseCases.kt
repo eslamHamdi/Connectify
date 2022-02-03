@@ -13,4 +13,10 @@ class ChatRoomUseCases @Inject constructor(private val repository:ChatRoomReposi
      suspend fun getRoomMessages(roomId:String) = repository.getRoomMessages(roomId)
 
     fun getSenderId() = repository.getSenderId()
+
+
+    suspend fun sendUserStatus(state:String,roomId: String)= repository.sendUserActivityState(state,roomId)
+    fun getContactState(contactId: String)= repository.getContactStatus(contactId)
+
+    suspend fun getContactTypingState(roomId: String)=repository.getContactTypingState(roomId)
 }

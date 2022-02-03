@@ -48,7 +48,6 @@ class ChannelsViewModel @Inject constructor(private val chatsScreenUseCases: Cha
 
     init {
 
-
       listenToUpdates()
 
     }
@@ -182,4 +181,6 @@ class ChannelsViewModel @Inject constructor(private val chatsScreenUseCases: Cha
             }
         }
     }
+
+
 }

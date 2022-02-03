@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberImagePainter
@@ -46,6 +47,7 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
 
+@ExperimentalUnitApi
 @ExperimentalAnimationApi
 @ExperimentalComposeUiApi
 @Destination
@@ -75,11 +77,13 @@ fun ChannelListScreen(navigator: DestinationsNavigator?)
                     .align(Alignment.Center)
                     .alpha(if (viewModel.loadingState.value) 1f else 0f))
 
-                LazyColumn() {
+                LazyColumn {
 
 
                     items(rooms.value.sortedByDescending {
                         it?.lastMessage?.timeStamp
+                    }, key = {chatRoom->
+                        chatRoom?.id!!
                     }){ room->
                         if (room != null) {
 
@@ -97,6 +101,7 @@ fun ChannelListScreen(navigator: DestinationsNavigator?)
 
 }
 
+  @ExperimentalUnitApi
   @ExperimentalComposeUiApi
   @ExperimentalAnimationApi
   @Composable
@@ -225,6 +230,7 @@ fun TopBar(title:String, icon: ImageVector,viewModel:ChannelsViewModel, navActio
 enum class LastMessageType(var content:String?) {
     Text(content = "null"), Photo(content = null), Video(content = null), File(content = null)
 }
+@ExperimentalUnitApi
 @ExperimentalAnimationApi
 @ExperimentalComposeUiApi
 @Preview(showBackground = true)

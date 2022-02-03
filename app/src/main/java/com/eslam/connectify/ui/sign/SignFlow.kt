@@ -8,6 +8,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.eslam.connectify.data.repositories.SharedPreferencesRepositoryImpl
 import com.eslam.connectify.domain.models.Response
@@ -17,6 +18,7 @@ import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
+@ExperimentalUnitApi
 @ExperimentalAnimationApi
 @ExperimentalComposeUiApi
 @Composable
